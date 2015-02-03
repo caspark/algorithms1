@@ -44,7 +44,7 @@ pub trait ToPrimitive {
     /// Converts the value of `self` to an `usize` and panics on failure.
     #[inline]
     fn assume_usize(&self) -> usize {
-        self.to_u64().and_then(|x| x.to_usize()).unwrap()
+        self.to_u64().map(|x| x.to_usize().expect(&format!("{}.assume_usize() failed", x))).unwrap()
     }
 
     /// Converts the value of `self` to an `u8`.
@@ -68,7 +68,7 @@ pub trait ToPrimitive {
     /// Converts the value of `self` to an `u32`, or panics on failure.
     #[inline]
     fn assume_u32(&self) -> u32 {
-        self.to_u64().and_then(|x| x.to_u32()).unwrap()
+        self.to_u64().map(|x| x.to_u32().expect(&format!("{}.assume_u32() failed", x))).unwrap()
     }
 
     /// Converts the value of `self` to an `u64`.
