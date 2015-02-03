@@ -1,4 +1,8 @@
+#![feature(rand)] // so we can use random numbers without warnings
+#![feature(core)] // otherwise we get a warning from generated code of #[derive(Debug)]
+
 extern crate quickcheck;
+
 
 trait SafeToUsize {
     fn to_usize(&self) -> usize;
@@ -42,7 +46,9 @@ mod quickunion {
     }
 
     mod tests {
-        use quickcheck::quickcheck;
+        use std::rand;
+        use std::rand::Rng;
+        use quickcheck::{quickcheck, QuickCheck, StdGen};
         use SafeToUsize;
         use super::QuickUnionUF;
 
@@ -79,24 +85,26 @@ mod quickunion {
         #[test]
         fn test_connecting_nodes_works() {
             fn connecting_nodes_works(sizes: Vec<u32>) -> bool {
-                use std::rand::{thread_rng, Rng};
+                use std::cmp;
 
-                if sizes.len() == 0 {
-                    return true;
-                }
+                // set some constraints to avoid having this property take forever
+                let max_size_per_group = 1001;
+                let max_node_count = 5000;
 
                 let mut node_count = 0u32;
                 let mut node_groups: Vec<Vec<u32>> = Vec::with_capacity(sizes.len());
                 for &size in sizes.iter() {
-                    let nodes = (node_count .. (node_count + size)).collect::<Vec<u32>>();
-                    node_count += size;
-                    node_groups.push(nodes);
+                    let limited_size = cmp::min(size % max_size_per_group, max_node_count);
+                    if limited_size > 0 {
+                        let nodes = (node_count .. (node_count + limited_size)).collect::<Vec<u32>>();
+                        node_count += limited_size;
+                        node_groups.push(nodes);
+                    }
                 }
-                println!("node_groups has {} nodes: {:?}", node_count, node_groups);
-
-                let mut rng = thread_rng(); // TODO use http://doc.rust-lang.org/std/rand/trait.SeedableRng.html
+                // println!("node_groups has {} nodes: {:?}", node_count, node_groups);
 
                 let nodes_to_union: Vec<(u32, u32)> = {
+                    let mut rng = rand::thread_rng(); // TODO use http://doc.rust-lang.org/std/rand/trait.SeedableRng.html
                     let mut unions = Vec::with_capacity(node_count.to_usize());
                     for nodes in node_groups.iter() {
                         let mut shuffled_nodes = nodes.clone();
@@ -115,25 +123,34 @@ mod quickunion {
 
                 let mut qu = QuickUnionUF::new(node_count);
                 for &(p, q) in nodes_to_union.iter() {
-                    println!("Union: {}, {}", p, q);
+                    // println!("Union: {}, {}", p, q);
                     qu.union(p, q);
                 }
 
-                for nodes in node_groups.iter() {
-                    if !are_connected(&qu, nodes) {
-                        return false
-                    }
-                }
-                true
+                matches_connection_state(&qu, &node_groups)
             }
-            // assert!(connecting_nodes_works(vec![0, 2, 4, 8]), "the example failed");
-            quickcheck(connecting_nodes_works as fn(Vec<u32>) -> bool);
+            assert!(connecting_nodes_works(vec![0, 2, 4, 8, 15]), "the example failed");
+            QuickCheck::new().gen(StdGen::new(rand::thread_rng(), 25)) // generate vecs with max size 25
+                .quickcheck(connecting_nodes_works as fn(Vec<u32>) -> bool);
         }
 
-        fn are_connected(qu: &QuickUnionUF, nodes: &Vec<u32>) -> bool {
-            for &p in nodes.iter() {
-                for &q in nodes.iter() {
-                    if p != q && (!qu.connected(p, q) || !qu.connected(q, p)) {
+        fn matches_connection_state(qu: &QuickUnionUF, node_groups: &Vec<Vec<u32>>) -> bool {
+            use std::collections::HashMap;
+
+            let mut expected_node_groups = HashMap::<u32, u32>::new();
+            let mut all_nodes = Vec::new();
+            for (group_num, nodes) in node_groups.iter().enumerate() {
+                for node in nodes.iter() {
+                    expected_node_groups.insert(*node, group_num as u32); // FIXME this case could fail silently
+                    all_nodes.push(node);
+                }
+            };
+
+            for &p in all_nodes.iter() {
+                let p_group = expected_node_groups.get(p).unwrap();
+                for &q in all_nodes.iter() {
+                    let expect_connected = p_group == expected_node_groups.get(q).unwrap();
+                    if p != q && (qu.connected(*p, *q) != expect_connected || qu.connected(*q, *p) != expect_connected) {
                         println!("{} and {} are not connected", p, q);
                         return false;
                     }
