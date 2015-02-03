@@ -15,7 +15,13 @@ impl SafeToUsize for u32 {
 }
 
 mod quickunion {
+    use std::iter;
     use SafeToUsize;
+
+    pub trait UnionFind {
+        fn union(&mut self, p: u32, q: u32);
+        fn connected(&self, p: u32, q: u32) -> bool;
+    }
 
     #[derive(Debug)]
     pub struct QuickUnionUF {
@@ -27,21 +33,65 @@ mod quickunion {
             QuickUnionUF { id: (0u32..size).collect() }
         }
 
-        pub fn union(&mut self, p: u32, q: u32) {
+        fn root(&self, mut i: u32) -> u32 {
+            while i != self.id[i.to_usize()] {
+                i = self.id[i.to_usize()];
+            }
+            i
+        }
+    }
+
+    impl UnionFind for QuickUnionUF {
+        fn union(&mut self, p: u32, q: u32) {
             let i = self.root(p);
             let j = self.root(q);
             self.id[i.to_usize()] = j;
         }
 
-        pub fn connected(&self, p: u32, q: u32) -> bool {
+        fn connected(&self, p: u32, q: u32) -> bool {
             self.root(p) == self.root(q)
         }
+    }
 
-        pub fn root(&self, mut i: u32) -> u32 {
+    #[derive(Debug)]
+    pub struct WeightedQuickUnionUF {
+        id: Vec<u32>,
+        sz: Vec<u32>,
+    }
+
+    impl WeightedQuickUnionUF {
+        pub fn new(size: u32) -> WeightedQuickUnionUF {
+            WeightedQuickUnionUF {
+                id: (0u32..size).collect(),
+                sz: iter::repeat(1u32).take(size as usize).collect(),
+            }
+        }
+
+        fn root(&self, mut i: u32) -> u32 {
             while i != self.id[i.to_usize()] {
                 i = self.id[i.to_usize()];
             }
             i
+        }
+    }
+
+    impl UnionFind for WeightedQuickUnionUF {
+        fn union(&mut self, p: u32, q: u32) {
+            let i = self.root(p);
+            let j = self.root(q);
+            if i != j {
+                if self.sz[i.to_usize()] < self.sz[j.to_usize()] {
+                    self.id[i.to_usize()] = j;
+                    self.sz[j.to_usize()] += self.sz[i.to_usize()];
+                } else {
+                    self.id[j.to_usize()] = i;
+                    self.sz[i.to_usize()] += self.sz[j.to_usize()];
+                }
+            }
+        }
+
+        fn connected(&self, p: u32, q: u32) -> bool {
+            self.root(p) == self.root(q)
         }
     }
 
@@ -50,6 +100,7 @@ mod quickunion {
         use std::rand::Rng;
         use quickcheck::{quickcheck, QuickCheck, StdGen};
         use SafeToUsize;
+        use super::UnionFind;
         use super::QuickUnionUF;
 
         #[test]
@@ -160,22 +211,4 @@ mod quickunion {
         }
 
     }
-}
-
-#[allow(dead_code)]
-fn main() {
-    use quickunion::QuickUnionUF;
-
-    println!("Percolation");
-
-    let mut qu = QuickUnionUF::new(10);
-    println!("Got a {:?}", qu);
-
-    println!("Root of element #1 is {}", qu.root(1));
-
-    assert_eq!(qu.root(1), 1);
-    qu.union(1, 2);
-    assert_eq!(qu.root(1), 2);
-    assert_eq!(qu.root(2), 2);
-    assert!(qu.connected(1,2), "1 and 2 should be connected");
 }
