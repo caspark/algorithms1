@@ -20,11 +20,7 @@ mod quickunion {
 
     impl QuickUnionUF {
         pub fn new(size: u32) -> QuickUnionUF {
-            let mut v = Vec::with_capacity(size.to_usize());
-            for i in 0..size {
-                v.push(i);
-            }
-            QuickUnionUF { id: v }
+            QuickUnionUF { id: (0u32..size).collect() }
         }
 
         pub fn union(&mut self, p: u32, q: u32) {
@@ -47,13 +43,13 @@ mod quickunion {
 
     mod tests {
         use quickcheck::quickcheck;
+        use super::QuickUnionUF;
 
         #[test]
         fn test_each_number_is_own_root() {
             fn each_number_is_own_root(size: u32) -> bool {
-                use quickunion::QuickUnionUF;
-                let qu = QuickUnionUF::new(size as u32);
-                for i in 0..(size as u32) {
+                let qu = QuickUnionUF::new(size);
+                for i in 0..size {
                     if i != qu.root(i) {
                         return false;
                     }
@@ -62,6 +58,72 @@ mod quickunion {
             }
             quickcheck(each_number_is_own_root as fn(u32) -> bool);
         }
+
+        #[test]
+        fn test_nothing_is_connected_without_any_unions() {
+            fn nothing_is_connected_without_any_unions(size: u32) -> bool {
+                let qu = QuickUnionUF::new(size);
+                for i in 0..size {
+                    for j in i..size {
+                        if i != j && qu.connected(i, j) {
+                            return false;
+                        }
+                    }
+                }
+                true
+            }
+            quickcheck(nothing_is_connected_without_any_unions as fn(u32) -> bool);
+        }
+
+        #[test]
+        fn test_connecting_nodes_works() {
+            fn connecting_nodes_works(sizes: Vec<u32>) -> bool {
+                use std::collections::HashMap;
+
+                if sizes.len() == 0 {
+                    return true;
+                }
+
+                let mut highest_node = 0u32;
+                let mut groups_to_nodes = HashMap::new();
+                for (group, &size) in sizes.iter().enumerate() {
+                    let nodes = (highest_node .. (highest_node + size)).collect::<Vec<u32>>();
+                    highest_node += size;
+                    println!("highest is {}, nodes is {:?}", highest_node, nodes);
+                    groups_to_nodes.insert(group, nodes);
+                }
+
+                println!("groups_to_nodes = {:?}", groups_to_nodes);
+
+                let qu_size = highest_node + sizes[sizes.len() - 1];
+                println!("Creating quickunion of size {}", qu_size);
+                let mut qu = QuickUnionUF::new(qu_size);
+
+                for nodes in groups_to_nodes.values() {
+                    //TODO random union order
+                    // use std::rand::{thread_rng, Rng};
+                    // let mut rng = thread_rng(); // TODO use http://doc.rust-lang.org/std/rand/trait.SeedableRng.html
+                    // let mut shuffled = nodes.clone();
+                    // rng.shuffle(shuffled.as_mut_slice());
+                    for window in nodes[].windows(2) {
+                        let window_nodes = window.iter().map(|&a| a).collect::<Vec<u32>>();
+                        match &window_nodes[] {
+                            [p, q] => {
+                                println!("Connecting {} and {}", p, q);
+                                qu.union(p, q);
+                            },
+                            _ => unreachable!()
+                        };
+                    }
+                }
+
+                // TODO check that every group_num'th element is connected
+                false
+            }
+            assert!(connecting_nodes_works(vec![2,4, 6]), "example failed");
+            // quickcheck(connecting_nodes_works as fn(Vec<u32>) -> bool);
+        }
+
     }
 }
 
