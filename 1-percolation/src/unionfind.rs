@@ -81,94 +81,94 @@ impl UnionFind for WeightedQuickUnionUF {
 mod tests {
     use std::rand;
     use std::rand::Rng;
-    use quickcheck::{quickcheck, QuickCheck, StdGen};
+    use quickcheck::{StdGen, QuickCheck};
     use super::super::conversions::ToPrimitive;
     use super::UnionFind;
-    use super::QuickUnionUF;
+    use super::{QuickUnionUF, WeightedQuickUnionUF};
 
     #[test]
-    fn test_each_number_is_own_root() {
-        fn each_number_is_own_root(size: u32) -> bool {
-            let qu = QuickUnionUF::new(size);
-            for i in 0..size {
-                if i != qu.root(i) {
-                    return false;
-                }
-            }
-            true
-        }
-        quickcheck(each_number_is_own_root as fn(u32) -> bool);
-    }
-
-    #[test]
-    fn test_nothing_is_connected_without_any_unions() {
-        fn nothing_is_connected_without_any_unions(size: u32) -> bool {
-            let qu = QuickUnionUF::new(size);
-            for i in 0..size {
-                for j in i..size {
-                    if i != j && qu.connected(i, j) {
-                        return false;
-                    }
-                }
-            }
-            true
-        }
-        quickcheck(nothing_is_connected_without_any_unions as fn(u32) -> bool);
-    }
-
-    #[test]
-    fn test_connecting_nodes_works() {
+    fn quickunion_connecting_nodes_works() {
         fn connecting_nodes_works(sizes: Vec<u32>) -> bool {
-            use std::cmp;
-
-            // set some constraints to avoid having this property take forever
-            let max_size_per_group = 1001;
-            let max_node_count = 5000;
-
-            let mut node_count = 0u32;
-            let mut node_groups: Vec<Vec<u32>> = Vec::with_capacity(sizes.len());
-            for &size in sizes.iter() {
-                let limited_size = cmp::min(size % max_size_per_group, max_node_count);
-                if limited_size > 0 {
-                    let nodes = (node_count .. (node_count + limited_size)).collect::<Vec<u32>>();
-                    node_count += limited_size;
-                    node_groups.push(nodes);
-                }
-            }
-            // println!("node_groups has {} nodes: {:?}", node_count, node_groups);
-
-            let nodes_to_union: Vec<(u32, u32)> = {
-                let mut rng = rand::thread_rng(); // TODO use http://doc.rust-lang.org/std/rand/trait.SeedableRng.html
-                let mut unions = Vec::with_capacity(node_count.assume_usize());
-                for nodes in node_groups.iter() {
-                    let mut shuffled_nodes = nodes.clone();
-                    rng.shuffle(shuffled_nodes.as_mut_slice());
-                    for window in shuffled_nodes[].windows(2) {
-                        let window_nodes = window.iter().map(|&a| a).collect::<Vec<u32>>();
-                        match &window_nodes[] {
-                            [p, q] => unions.push((p, q)),
-                            _ => unreachable!()
-                        }
-                    }
-                }
-                rng.shuffle(unions.as_mut_slice());
-                unions
-            };
+            let (node_count, nodes_to_union, expected_groups) = generate_unions(&sizes);
 
             let mut qu = QuickUnionUF::new(node_count);
+            matches_connection_state(&qu, &(0u32 .. node_count).map(|node| vec![node]).collect());
+
             for &(p, q) in nodes_to_union.iter() {
                 // println!("Union: {}, {}", p, q);
                 qu.union(p, q);
             }
-
-            matches_connection_state(&qu, &node_groups)
+            matches_connection_state(&qu, &expected_groups)
         }
-        assert!(connecting_nodes_works(vec![0, 2, 4, 8, 15]), "the example failed");
         QuickCheck::new().gen(StdGen::new(rand::thread_rng(), 25)) // generate vecs with max size 25
             .quickcheck(connecting_nodes_works as fn(Vec<u32>) -> bool);
     }
 
-    fn matches_connection_state(qu: &QuickUnionUF, node_groups: &Vec<Vec<u32>>) -> bool {
+
+    #[test]
+    fn weighted_quickunion_connecting_nodes_works() {
+        fn connecting_nodes_works(sizes: Vec<u32>) -> bool {
+            let (node_count, nodes_to_union, expected_groups) = generate_unions(&sizes);
+
+            let mut qu = WeightedQuickUnionUF::new(node_count);
+            matches_connection_state(&qu, &(0u32 .. node_count).map(|node| vec![node]).collect());
+
+            for &(p, q) in nodes_to_union.iter() {
+                // println!("Union: {}, {}", p, q);
+                qu.union(p, q);
+            }
+            matches_connection_state(&qu, &expected_groups)
+        }
+        QuickCheck::new().gen(StdGen::new(rand::thread_rng(), 25)) // generate vecs with max size 25
+            .quickcheck(connecting_nodes_works as fn(Vec<u32>) -> bool);
+    }
+
+    /// Given a list of group sizes, returns the number of nodes, the unions to make, and the final expected groups.
+    /// Current implementation limitations:
+    /// - the unions & their ordering is currently non-deterministic
+    /// - the final connected groups will consist of consequtive numbers
+    fn generate_unions(sizes: &Vec<u32>) -> (u32, Vec<(u32, u32)>, Vec<Vec<u32>>) {
+        use std::cmp;
+
+        // set some constraints to avoid having this property take forever
+        let max_size_per_group = 1001;
+        let max_node_count = 5000;
+
+        let mut node_count = 0u32;
+        let mut expected_groups: Vec<Vec<u32>> = Vec::with_capacity(sizes.len());
+        for &size in sizes.iter() {
+            let limited_size = cmp::min(size % max_size_per_group, max_node_count);
+            if limited_size > 0 {
+                let nodes = (node_count .. (node_count + limited_size)).collect::<Vec<u32>>();
+                node_count += limited_size;
+                expected_groups.push(nodes);
+            }
+        }
+        // println!("expected_groups has {} nodes: {:?}", node_count, expected_groups);
+
+        let nodes_to_union: Vec<(u32, u32)> = {
+            let mut rng = rand::thread_rng(); // TODO use http://doc.rust-lang.org/std/rand/trait.SeedableRng.html
+            let mut unions = Vec::with_capacity(node_count.assume_usize());
+            for nodes in expected_groups.iter() {
+                let mut shuffled_nodes = nodes.clone();
+                rng.shuffle(shuffled_nodes.as_mut_slice());
+                for window in shuffled_nodes[].windows(2) {
+                    // wtf, there has to be a better way to convert a vector of 2 elements into a tuple :(
+                    let window_nodes = window.iter().map(|&a| a).collect::<Vec<u32>>();
+                    match &window_nodes[] {
+                        [p, q] => unions.push((p, q)),
+                        _ => unreachable!()
+                    }
+                }
+            }
+            rng.shuffle(unions.as_mut_slice());
+            unions
+        };
+
+        (node_count, nodes_to_union, expected_groups)
+    }
+
+    fn matches_connection_state(qu: &UnionFind, node_groups: &Vec<Vec<u32>>) -> bool {
         use std::collections::HashMap;
 
         let mut expected_node_groups = HashMap::<u32, u32>::new();
