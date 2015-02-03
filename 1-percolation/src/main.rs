@@ -4,5 +4,5 @@
 
 extern crate quickcheck;
 
-mod util;
+mod conversions;
 mod unionfind;
