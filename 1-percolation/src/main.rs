@@ -43,6 +43,7 @@ mod quickunion {
 
     mod tests {
         use quickcheck::quickcheck;
+        use SafeToUsize;
         use super::QuickUnionUF;
 
         #[test]
@@ -78,55 +79,73 @@ mod quickunion {
         #[test]
         fn test_connecting_nodes_works() {
             fn connecting_nodes_works(sizes: Vec<u32>) -> bool {
-                use std::collections::HashMap;
+                use std::rand::{thread_rng, Rng};
 
                 if sizes.len() == 0 {
                     return true;
                 }
 
-                let mut highest_node = 0u32;
-                let mut groups_to_nodes = HashMap::new();
-                for (group, &size) in sizes.iter().enumerate() {
-                    let nodes = (highest_node .. (highest_node + size)).collect::<Vec<u32>>();
-                    highest_node += size;
-                    println!("highest is {}, nodes is {:?}", highest_node, nodes);
-                    groups_to_nodes.insert(group, nodes);
+                let mut node_count = 0u32;
+                let mut node_groups: Vec<Vec<u32>> = Vec::with_capacity(sizes.len());
+                for &size in sizes.iter() {
+                    let nodes = (node_count .. (node_count + size)).collect::<Vec<u32>>();
+                    node_count += size;
+                    node_groups.push(nodes);
+                }
+                println!("node_groups has {} nodes: {:?}", node_count, node_groups);
+
+                let mut rng = thread_rng(); // TODO use http://doc.rust-lang.org/std/rand/trait.SeedableRng.html
+
+                let nodes_to_union: Vec<(u32, u32)> = {
+                    let mut unions = Vec::with_capacity(node_count.to_usize());
+                    for nodes in node_groups.iter() {
+                        let mut shuffled_nodes = nodes.clone();
+                        rng.shuffle(shuffled_nodes.as_mut_slice());
+                        for window in shuffled_nodes[].windows(2) {
+                            let window_nodes = window.iter().map(|&a| a).collect::<Vec<u32>>();
+                            match &window_nodes[] {
+                                [p, q] => unions.push((p, q)),
+                                _ => unreachable!()
+                            }
+                        }
+                    }
+                    rng.shuffle(unions.as_mut_slice());
+                    unions
+                };
+
+                let mut qu = QuickUnionUF::new(node_count);
+                for &(p, q) in nodes_to_union.iter() {
+                    println!("Union: {}, {}", p, q);
+                    qu.union(p, q);
                 }
 
-                println!("groups_to_nodes = {:?}", groups_to_nodes);
-
-                let qu_size = highest_node + sizes[sizes.len() - 1];
-                println!("Creating quickunion of size {}", qu_size);
-                let mut qu = QuickUnionUF::new(qu_size);
-
-                for nodes in groups_to_nodes.values() {
-                    //TODO random union order
-                    // use std::rand::{thread_rng, Rng};
-                    // let mut rng = thread_rng(); // TODO use http://doc.rust-lang.org/std/rand/trait.SeedableRng.html
-                    // let mut shuffled = nodes.clone();
-                    // rng.shuffle(shuffled.as_mut_slice());
-                    for window in nodes[].windows(2) {
-                        let window_nodes = window.iter().map(|&a| a).collect::<Vec<u32>>();
-                        match &window_nodes[] {
-                            [p, q] => {
-                                println!("Connecting {} and {}", p, q);
-                                qu.union(p, q);
-                            },
-                            _ => unreachable!()
-                        };
+                for nodes in node_groups.iter() {
+                    if !are_connected(&qu, nodes) {
+                        return false
                     }
                 }
-
-                // TODO check that every group_num'th element is connected
-                false
+                true
             }
-            assert!(connecting_nodes_works(vec![2,4, 6]), "example failed");
-            // quickcheck(connecting_nodes_works as fn(Vec<u32>) -> bool);
+            // assert!(connecting_nodes_works(vec![0, 2, 4, 8]), "the example failed");
+            quickcheck(connecting_nodes_works as fn(Vec<u32>) -> bool);
+        }
+
+        fn are_connected(qu: &QuickUnionUF, nodes: &Vec<u32>) -> bool {
+            for &p in nodes.iter() {
+                for &q in nodes.iter() {
+                    if p != q && (!qu.connected(p, q) || !qu.connected(q, p)) {
+                        println!("{} and {} are not connected", p, q);
+                        return false;
+                    }
+                }
+            }
+            true
         }
 
     }
 }
 
+#[allow(dead_code)]
 fn main() {
     use quickunion::QuickUnionUF;
 
