@@ -92,7 +92,9 @@ mod tests {
             let (node_count, nodes_to_union, expected_groups) = generate_unions(&sizes);
 
             let mut qu = QuickUnionUF::new(node_count);
-            matches_connection_state(&qu, &(0u32 .. node_count).map(|node| vec![node]).collect());
+            if !matches_connection_state(&qu, &(0u32 .. node_count).map(|node| vec![node]).collect()) {
+                return false;
+            }
 
             for &(p, q) in nodes_to_union.iter() {
                 // println!("Union: {}, {}", p, q);
@@ -111,7 +113,9 @@ mod tests {
             let (node_count, nodes_to_union, expected_groups) = generate_unions(&sizes);
 
             let mut qu = WeightedQuickUnionUF::new(node_count);
-            matches_connection_state(&qu, &(0u32 .. node_count).map(|node| vec![node]).collect());
+            if !matches_connection_state(&qu, &(0u32 .. node_count).map(|node| vec![node]).collect()) {
+                return false;
+            }
 
             for &(p, q) in nodes_to_union.iter() {
                 // println!("Union: {}, {}", p, q);
