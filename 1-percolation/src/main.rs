@@ -7,9 +7,9 @@ mod conversions;
 mod unionfind;
 
 fn main() {
-    use conversions::ToPrimitive;
+    use conversions::TryU32Converter;
     use std::num::Int;
 
     println!("Going to convert a too-big usize to a u32 (should panic)");
-    (2us.pow(32)).assume_u32();
+    (2us.pow(32)).try_u32();
 }

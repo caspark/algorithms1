@@ -1,5 +1,5 @@
 use std::iter;
-use conversions::ToPrimitive;
+use conversions::AsUsizeConverter;
 
 pub trait UnionFind {
     fn union(&mut self, p: u32, q: u32);
@@ -17,8 +17,8 @@ impl QuickUnionUF {
     }
 
     fn root(&self, mut i: u32) -> u32 {
-        while i != self.id[i.assume_usize()] {
-            i = self.id[i.assume_usize()];
+        while i != self.id[i.as_usize()] {
+            i = self.id[i.as_usize()];
         }
         i
     }
@@ -28,7 +28,7 @@ impl UnionFind for QuickUnionUF {
     fn union(&mut self, p: u32, q: u32) {
         let i = self.root(p);
         let j = self.root(q);
-        self.id[i.assume_usize()] = j;
+        self.id[i.as_usize()] = j;
     }
 
     fn connected(&self, p: u32, q: u32) -> bool {
@@ -46,13 +46,13 @@ impl WeightedQuickUnionUF {
     pub fn new(size: u32) -> WeightedQuickUnionUF {
         WeightedQuickUnionUF {
             id: (0u32..size).collect(),
-            sz: iter::repeat(1u32).take(size as usize).collect(),
+            sz: iter::repeat(1u32).take(size.as_usize()).collect(),
         }
     }
 
     fn root(&self, mut i: u32) -> u32 {
-        while i != self.id[i.assume_usize()] {
-            i = self.id[i.assume_usize()];
+        while i != self.id[i.as_usize()] {
+            i = self.id[i.as_usize()];
         }
         i
     }
@@ -63,12 +63,12 @@ impl UnionFind for WeightedQuickUnionUF {
         let i = self.root(p);
         let j = self.root(q);
         if i != j {
-            if self.sz[i.assume_usize()] < self.sz[j.assume_usize()] {
-                self.id[i.assume_usize()] = j;
-                self.sz[j.assume_usize()] += self.sz[i.assume_usize()];
+            if self.sz[i.as_usize()] < self.sz[j.as_usize()] {
+                self.id[i.as_usize()] = j;
+                self.sz[j.as_usize()] += self.sz[i.as_usize()];
             } else {
-                self.id[j.assume_usize()] = i;
-                self.sz[i.assume_usize()] += self.sz[j.assume_usize()];
+                self.id[j.as_usize()] = i;
+                self.sz[i.as_usize()] += self.sz[j.as_usize()];
             }
         }
     }
@@ -82,7 +82,7 @@ mod tests {
     use std::rand;
     use std::rand::Rng;
     use quickcheck::{StdGen, QuickCheck};
-    use super::super::conversions::ToPrimitive;
+    use super::super::conversions::{AsUsizeConverter, TryU32Converter};
     use super::UnionFind;
     use super::{QuickUnionUF, WeightedQuickUnionUF};
 
@@ -148,7 +148,7 @@ mod tests {
 
         let nodes_to_union: Vec<(u32, u32)> = {
             let mut rng = rand::thread_rng(); // TODO use http://doc.rust-lang.org/std/rand/trait.SeedableRng.html
-            let mut unions = Vec::with_capacity(node_count.assume_usize());
+            let mut unions = Vec::with_capacity(node_count.as_usize());
             for nodes in expected_groups.iter() {
                 let mut shuffled_nodes = nodes.clone();
                 rng.shuffle(shuffled_nodes.as_mut_slice());
@@ -175,7 +175,7 @@ mod tests {
         let mut all_nodes = Vec::new();
         for (group_num, nodes) in node_groups.iter().enumerate() {
             for node in nodes.iter() {
-                expected_node_groups.insert(*node, group_num as u32); // FIXME this case could fail silently
+                expected_node_groups.insert(*node, group_num.try_u32());
                 all_nodes.push(node);
             }
         };
