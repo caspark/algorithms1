@@ -14,5 +14,12 @@ fn main() {
     // (2us.pow(32)).try_u32();
 
     use percolation::Percolation;
-    Percolation::new(10);
+    let mut perc = Percolation::new(10);
+
+    assert!(!perc.is_open(1, 1));
+
+    perc.open(1, 1);
+    assert!(perc.is_open(1, 1));
+    assert!(perc.is_open(2, 1));
+    assert!(perc.is_open(1, 2));
 }
