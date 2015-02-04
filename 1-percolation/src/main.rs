@@ -5,11 +5,14 @@ extern crate quickcheck;
 
 mod conversions;
 mod unionfind;
+mod percolation;
 
 fn main() {
-    use conversions::TryU32Converter;
-    use std::num::Int;
+    // use conversions::TryU32Converter;
+    // use std::num::Int;
+    // println!("Going to convert a too-big usize to a u32 (should panic)");
+    // (2us.pow(32)).try_u32();
 
-    println!("Going to convert a too-big usize to a u32 (should panic)");
-    (2us.pow(32)).try_u32();
+    use percolation::Percolation;
+    Percolation::new(10);
 }
