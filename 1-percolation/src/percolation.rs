@@ -1,10 +1,12 @@
 use std::iter;
-use conversions::AsUsizeConverter;
+use conversions::{AsUsizeConverter, TryU32Converter};
 use std::num::Int;
+use unionfind::{UnionFind, WeightedQuickUnionUF};
 
 pub struct Percolation {
     n: usize,
     grid: Vec<bool>,
+    qu: WeightedQuickUnionUF,
 }
 
 impl Percolation {
@@ -12,6 +14,14 @@ impl Percolation {
         Percolation {
             n: n,
             grid: iter::repeat(false).take(n.pow(2)).collect(),
+            qu: {
+                let mut q = WeightedQuickUnionUF::new((n * n + 2).try_u32());
+                for i in 1 .. (n + 1) {
+                    q.union((i - 1).try_u32(), (n * n).try_u32());
+                    q.union((n * (n - 1) + i - 1).try_u32(), (n * n + 1).try_u32());
+                }
+                q
+            },
         }
     }
 
@@ -37,10 +47,10 @@ impl Percolation {
 
         let neighbours = vec![(i, j - 1), (i, j + 1), (i + 1, j), (i - 1, j)];
         for (ni, nj) in neighbours {
-            if self.in_bounds(ni, nj) {
-                println!("Opening ({}, {})", ni, nj);
+            if self.in_bounds(ni, nj) && self.is_open(ni, nj) {
+                // println!("Connecting newly opened {:?} with already-open {:?}", (i, j), (ni, nj));
                 let neighbour_index = self.to_index(ni, nj);
-                self.grid[neighbour_index] = true;
+                self.qu.union(index.try_u32(), neighbour_index.try_u32());
             }
         }
     }
@@ -51,7 +61,59 @@ impl Percolation {
     }
 
     pub fn percolates(&self) -> bool {
-        panic!("TODO")
+        self.qu.connected((self.n * self.n).try_u32(), (self.n * self.n + 1).try_u32())
+    }
+}
+
+pub fn simulate(n: usize) -> f32 {
+    use rand::distributions::range::Range;
+    use rand::distributions::IndependentSample;
+    use rand::ThreadRng;
+    use rand;
+
+    fn pick_closed_site(perc: &Percolation, range: &mut Range<usize>, rng: &mut ThreadRng) -> (usize, usize) {
+        loop {
+            let (i, j) = ((*range).ind_sample(rng), range.ind_sample(rng));
+            if !perc.is_open(i, j) {
+                return (i, j);
+            }
+        }
+    }
+
+    let mut rng = rand::thread_rng();
+    let mut random_range = Range::new(1, n + 1);
+    let mut perc = Percolation::new(n);
+    let mut opened = 0u32;
+    while !perc.percolates() {
+        let (i, j) = pick_closed_site(&perc, &mut random_range, &mut rng);
+        perc.open(i, j);
+        opened += 1;
+    }
+    opened as f32 / (n * n) as f32
+}
+
+pub fn simulate_multiple(n: usize, times: usize) -> PercolationStats {
+    let mut results = Vec::with_capacity(times as usize);
+    for _ in 0 .. times {
+        results.push(simulate(n));
+    }
+    PercolationStats {
+        results: results,
+    }
+}
+
+#[derive(Debug)]
+pub struct PercolationStats {
+    results: Vec<f32>,
+}
+
+impl PercolationStats {
+    pub fn mean(&self) -> f32 {
+        let mut mean = 0f32;
+        for (i, &r) in self.results.iter().enumerate() {
+            mean = (mean * i as f32 + r ) / (i + 1) as f32;
+        }
+        mean
     }
 }
 
@@ -76,18 +138,12 @@ mod tests{
 
         perc.open(1, 1);
         assert!(perc.is_open(1, 1));
-        assert!(perc.is_open(2, 1));
-        assert!(perc.is_open(1, 2));
-        assert!(!perc.is_open(2, 2));
 
         perc.open(10, 10);
         assert!(perc.is_open(10, 10));
-        assert!(perc.is_open(9, 10));
-        assert!(perc.is_open(10, 9));
-        assert!(!perc.is_open(9, 9));
 
-        for i in 3 .. 8us {
-            for j in 3 .. 8us {
+        for i in 2 .. 9us {
+            for j in 2 .. 9us {
                 assert!(!perc.is_open(i, j));
             }
         }
