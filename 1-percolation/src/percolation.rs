@@ -1,12 +1,12 @@
 use std::iter;
 use conversions::{AsUsizeConverter, TryU32Converter};
 use std::num::Int;
-use unionfind::{UnionFind, WeightedQuickUnionUF};
+use unionfind::{UnionFind, WeightedQuickUnionPathCompressionUF};
 
 pub struct Percolation {
     n: usize,
     grid: Vec<bool>,
-    qu: WeightedQuickUnionUF,
+    qu: WeightedQuickUnionPathCompressionUF, //TODO should be able to use a trait here, but running into lifetime issues
 }
 
 impl Percolation {
@@ -15,7 +15,7 @@ impl Percolation {
             n: n,
             grid: iter::repeat(false).take(n.pow(2)).collect(),
             qu: {
-                let mut q = WeightedQuickUnionUF::new((n * n + 2).try_u32());
+                let mut q = WeightedQuickUnionPathCompressionUF::new((n * n + 2).try_u32());
                 for i in 1 .. (n + 1) {
                     q.union((i - 1).try_u32(), (n * n).try_u32());
                     q.union((n * (n - 1) + i - 1).try_u32(), (n * n + 1).try_u32());

@@ -12,6 +12,7 @@ pub struct QuickUnionUF {
 }
 
 impl QuickUnionUF {
+    #![allow(dead_code)]
     pub fn new(size: u32) -> QuickUnionUF {
         QuickUnionUF { id: (0u32..size).collect() }
     }
@@ -43,6 +44,7 @@ pub struct WeightedQuickUnionUF {
 }
 
 impl WeightedQuickUnionUF {
+    #![allow(dead_code)]
     pub fn new(size: u32) -> WeightedQuickUnionUF {
         WeightedQuickUnionUF {
             id: (0u32..size).collect(),
