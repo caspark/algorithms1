@@ -66,30 +66,23 @@ impl Percolation {
 }
 
 pub fn simulate(n: usize) -> f32 {
-    use rand::distributions::range::Range;
-    use rand::distributions::IndependentSample;
-    use rand::ThreadRng;
     use rand;
+    use rand::Rng;
 
-    fn pick_closed_site(perc: &Percolation, range: &mut Range<usize>, rng: &mut ThreadRng) -> (usize, usize) {
-        loop {
-            let (i, j) = ((*range).ind_sample(rng), range.ind_sample(rng));
-            if !perc.is_open(i, j) {
-                return (i, j);
-            }
+    let mut to_open: Vec<(usize, usize)> = Vec::with_capacity(n * n);
+    for i in 1 .. (n + 1) {
+        for j in 1 .. (n + 1) {
+            to_open.push((i, j));
         }
     }
+    rand::thread_rng().shuffle(to_open.as_mut_slice());
 
-    let mut rng = rand::thread_rng();
-    let mut random_range = Range::new(1, n + 1);
     let mut perc = Percolation::new(n);
-    let mut opened = 0u32;
     while !perc.percolates() {
-        let (i, j) = pick_closed_site(&perc, &mut random_range, &mut rng);
+        let (i, j) = to_open.pop().unwrap(); // safe: system must percolate before we run out of sites to open
         perc.open(i, j);
-        opened += 1;
     }
-    opened as f32 / (n * n) as f32
+    (n*n - to_open.len()) as f32 / (n * n) as f32
 }
 
 pub fn simulate_multiple(n: usize, times: usize) -> PercolationStats {
@@ -118,7 +111,7 @@ impl PercolationStats {
 }
 
 #[cfg(test)]
-mod tests{
+mod tests {
     use super::Percolation;
 
     #[test]
