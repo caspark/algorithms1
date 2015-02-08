@@ -78,6 +78,7 @@ impl UnionFind for WeightedQuickUnionUF {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use rand;
     use rand::Rng;

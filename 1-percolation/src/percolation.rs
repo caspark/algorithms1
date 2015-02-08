@@ -1,5 +1,5 @@
 use std::iter;
-use conversions::{AsUsizeConverter, TryU32Converter};
+use conversions::TryU32Converter;
 use std::num::Int;
 use unionfind::{UnionFind, WeightedQuickUnionUF};
 
@@ -117,6 +117,7 @@ impl PercolationStats {
     }
 }
 
+#[cfg(test)]
 mod tests{
     use super::Percolation;
 
