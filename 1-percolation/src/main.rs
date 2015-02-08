@@ -47,7 +47,8 @@ fn main() {
                     Ok((size, times, jobs)) => {
                         use percolation;
 
-                        println!("Running {num} percolation(s) on a {n}x{n} board", num=times, n=size);
+                        println!("Running {num} percolation(s) on a {n}x{n} board using {jobs} job(s)",
+                            num=times, n=size, jobs=jobs);
                         let stats = percolation::simulate_multiple(size, times, jobs);
                         // println!("{:?}", stats);
                         println!("Mean: {}", stats.mean());
