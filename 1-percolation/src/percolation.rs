@@ -91,12 +91,12 @@ pub fn simulate_multiple(n: usize, times: usize, jobs: u32) -> PercolationStats 
 
     let (tx, rx) = mpsc :: channel();
     for job_num in 0 .. jobs {
-        // distribute simulations across threads relatively evenly
-        let run_count = times / jobs.as_usize() + { if job_num == 0 { times % jobs.as_usize() } else { 0 } };
-        // println!("Job {} will run {} simulations", job_num, run_count);
         let tx = tx.clone();
         Thread::spawn(move|| {
-            for _ in 0 .. run_count {
+            let simulations_to_run =
+                    times / jobs.as_usize() + if job_num.as_usize() < times % jobs.as_usize() { 1 } else { 0 };
+            // println!("Job {} will run {} simulations", job_num, simulations_to_run);
+            for _ in 0 .. simulations_to_run {
                 tx.send(simulate(n)).unwrap();
             }
         });
