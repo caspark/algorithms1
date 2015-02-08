@@ -25,7 +25,7 @@ fn main() {
     let mut opts = Options::new();
     opts.reqopt("n", "size", "Size of each side of the percolation board", "SIZE");
     opts.optopt("t", "times", "Number of percolations to simulate", "TIMES");
-    opts.optopt("j", "jobs", "Number of jobs (threads) to use", "JOBS");
+    opts.optopt("j", "jobs", "Maximum number of jobs (threads) to use", "JOBS");
     opts.optflag("h", "help", "print this help menu");
     match opts.parse(args.tail()) {
         Ok(matches) => {
@@ -47,7 +47,7 @@ fn main() {
                     Ok((size, times, jobs)) => {
                         use percolation;
 
-                        println!("Running {num} percolation(s) on a {n}x{n} board using {jobs} job(s)",
+                        println!("Running {num} percolation(s) on a {n}x{n} board using max {jobs} job(s)",
                             num=times, n=size, jobs=jobs);
                         let stats = percolation::simulate_multiple(size, times, jobs);
                         // println!("{:?}", stats);

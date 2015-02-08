@@ -1,5 +1,5 @@
 use std::iter;
-use conversions::TryU32Converter;
+use conversions::{AsUsizeConverter, TryU32Converter};
 use std::num::Int;
 use unionfind::{UnionFind, WeightedQuickUnionUF};
 
@@ -88,12 +88,13 @@ pub fn simulate(n: usize) -> f32 {
 pub fn simulate_multiple(n: usize, times: usize, jobs: u32) -> PercolationStats {
     use std::thread::Thread;
     use std::sync::{Arc, Mutex, mpsc};
+    use std::cmp;
 
     // simulation runs left. Data doesn't matter - it's only used to distribute work across jobs.
     let sims_left = Arc::new(Mutex::new((0..times).collect::<Vec<usize>>()));
 
     let (tx, rx) = mpsc :: channel();
-    for _ in 0 .. jobs {
+    for _ in 0 .. cmp::min(jobs.as_usize(), times) {
         let tx = tx.clone();
         let sims_left = sims_left.clone();
         Thread::spawn(move|| {
