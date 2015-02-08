@@ -32,7 +32,14 @@ impl Percolation {
         let index = self.to_index(i, j);
         self.grid[index] = true;
 
-        //TODO open neighbours if they are in bounds
+        let neighbours = vec![(i, j - 1), (i, j + 1), (i + 1, j), (i - 1, j)];
+        for (ni, nj) in neighbours {
+            if self.in_bounds(ni, nj) {
+                println!("Opening ({}, {})", ni, nj);
+                let neighbour_index = self.to_index(ni, nj);
+                self.grid[neighbour_index] = true;
+            }
+        }
     }
 
     pub fn is_open(&self, i: usize, j: usize) -> bool {
