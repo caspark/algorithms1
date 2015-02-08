@@ -60,7 +60,7 @@ impl Percolation {
         self.grid[self.to_index(i, j)]
     }
 
-    pub fn percolates(&self) -> bool {
+    pub fn percolates(&mut self) -> bool {
         self.qu.connected((self.n * self.n).try_u32(), (self.n * self.n + 1).try_u32())
     }
 }

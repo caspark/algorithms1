@@ -3,7 +3,7 @@ use conversions::AsUsizeConverter;
 
 pub trait UnionFind {
     fn union(&mut self, p: u32, q: u32);
-    fn connected(&self, p: u32, q: u32) -> bool;
+    fn connected(&mut self, p: u32, q: u32) -> bool;
 }
 
 #[derive(Debug)]
@@ -31,7 +31,7 @@ impl UnionFind for QuickUnionUF {
         self.id[i.as_usize()] = j;
     }
 
-    fn connected(&self, p: u32, q: u32) -> bool {
+    fn connected(&mut self, p: u32, q: u32) -> bool {
         self.root(p) == self.root(q)
     }
 }
@@ -73,7 +73,50 @@ impl UnionFind for WeightedQuickUnionUF {
         }
     }
 
-    fn connected(&self, p: u32, q: u32) -> bool {
+    fn connected(&mut self, p: u32, q: u32) -> bool {
+        self.root(p) == self.root(q)
+    }
+}
+
+#[derive(Debug)]
+pub struct WeightedQuickUnionPathCompressionUF {
+    id: Vec<u32>,
+    sz: Vec<u32>,
+}
+
+impl WeightedQuickUnionPathCompressionUF {
+    pub fn new(size: u32) -> WeightedQuickUnionPathCompressionUF {
+        WeightedQuickUnionPathCompressionUF {
+            id: (0u32..size).collect(),
+            sz: iter::repeat(1u32).take(size.as_usize()).collect(),
+        }
+    }
+
+    fn root(&mut self, mut i: u32) -> u32 {
+        while i != self.id[i.as_usize()] {
+            self.id[i.as_usize()] = self.id[self.id[i.as_usize()].as_usize()];
+            i = self.id[i.as_usize()];
+        }
+        i
+    }
+}
+
+impl UnionFind for WeightedQuickUnionPathCompressionUF {
+    fn union(&mut self, p: u32, q: u32) {
+        let i = self.root(p);
+        let j = self.root(q);
+        if i != j {
+            if self.sz[i.as_usize()] < self.sz[j.as_usize()] {
+                self.id[i.as_usize()] = j;
+                self.sz[j.as_usize()] += self.sz[i.as_usize()];
+            } else {
+                self.id[j.as_usize()] = i;
+                self.sz[i.as_usize()] += self.sz[j.as_usize()];
+            }
+        }
+    }
+
+    fn connected(&mut self, p: u32, q: u32) -> bool {
         self.root(p) == self.root(q)
     }
 }
@@ -84,8 +127,7 @@ mod tests {
     use rand::Rng;
     use quickcheck::{StdGen, QuickCheck};
     use super::super::conversions::{AsUsizeConverter, TryU32Converter};
-    use super::UnionFind;
-    use super::{QuickUnionUF, WeightedQuickUnionUF};
+    use super::*;
 
     #[test]
     fn quickunion_connecting_nodes_works() {
@@ -93,7 +135,7 @@ mod tests {
             let (node_count, nodes_to_union, expected_groups) = generate_unions(&sizes);
 
             let mut qu = QuickUnionUF::new(node_count);
-            if !matches_connection_state(&qu, &(0u32 .. node_count).map(|node| vec![node]).collect()) {
+            if !matches_connection_state(&mut qu, &(0u32 .. node_count).map(|node| vec![node]).collect()) {
                 return false;
             }
 
@@ -101,7 +143,7 @@ mod tests {
                 // println!("Union: {}, {}", p, q);
                 qu.union(p, q);
             }
-            matches_connection_state(&qu, &expected_groups)
+            matches_connection_state(&mut qu, &expected_groups)
         }
         QuickCheck::new().gen(StdGen::new(rand::thread_rng(), 25)) // generate vecs with max size 25
             .quickcheck(connecting_nodes_works as fn(Vec<u32>) -> bool);
@@ -114,7 +156,7 @@ mod tests {
             let (node_count, nodes_to_union, expected_groups) = generate_unions(&sizes);
 
             let mut qu = WeightedQuickUnionUF::new(node_count);
-            if !matches_connection_state(&qu, &(0u32 .. node_count).map(|node| vec![node]).collect()) {
+            if !matches_connection_state(&mut qu, &(0u32 .. node_count).map(|node| vec![node]).collect()) {
                 return false;
             }
 
@@ -122,7 +164,27 @@ mod tests {
                 // println!("Union: {}, {}", p, q);
                 qu.union(p, q);
             }
-            matches_connection_state(&qu, &expected_groups)
+            matches_connection_state(&mut qu, &expected_groups)
+        }
+        QuickCheck::new().gen(StdGen::new(rand::thread_rng(), 25)) // generate vecs with max size 25
+            .quickcheck(connecting_nodes_works as fn(Vec<u32>) -> bool);
+    }
+
+    #[test]
+    fn weighted_quickunion_path_compression_connecting_nodes_works() {
+        fn connecting_nodes_works(sizes: Vec<u32>) -> bool {
+            let (node_count, nodes_to_union, expected_groups) = generate_unions(&sizes);
+
+            let mut qu = WeightedQuickUnionPathCompressionUF::new(node_count);
+            if !matches_connection_state(&mut qu, &(0u32 .. node_count).map(|node| vec![node]).collect()) {
+                return false;
+            }
+
+            for &(p, q) in nodes_to_union.iter() {
+                // println!("Union: {}, {}", p, q);
+                qu.union(p, q);
+            }
+            matches_connection_state(&mut qu, &expected_groups)
         }
         QuickCheck::new().gen(StdGen::new(rand::thread_rng(), 25)) // generate vecs with max size 25
             .quickcheck(connecting_nodes_works as fn(Vec<u32>) -> bool);
@@ -173,7 +235,7 @@ mod tests {
         (node_count, nodes_to_union, expected_groups)
     }
 
-    fn matches_connection_state(qu: &UnionFind, node_groups: &Vec<Vec<u32>>) -> bool {
+    fn matches_connection_state(qu: &mut UnionFind, node_groups: &Vec<Vec<u32>>) -> bool {
         use std::collections::HashMap;
 
         let mut expected_node_groups = HashMap::<u32, u32>::new();
