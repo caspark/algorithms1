@@ -20,15 +20,18 @@ impl Percolation {
     }
 
     fn to_index(&self, i: usize, j: usize) -> usize {
-        if self.in_bounds(i, j) {
-            (i - 1) + (j - 1) * self.n
-        } else {
+        return (i - 1) + (j - 1) * self.n
+    }
+
+    fn assert_in_bounds(&self, i: usize, j: usize) {
+        if !self.in_bounds(i, j) {
             panic!(format!("Out of bounds: ({i}, {j}) with n = {n}",
                     i=i, j=j, n=self.n))
         }
     }
 
     pub fn open(&mut self, i: usize, j: usize) {
+        self.assert_in_bounds(i, j);
         let index = self.to_index(i, j);
         self.grid[index] = true;
 
@@ -43,6 +46,7 @@ impl Percolation {
     }
 
     pub fn is_open(&self, i: usize, j: usize) -> bool {
+        self.assert_in_bounds(i, j);
         self.grid[self.to_index(i, j)]
     }
 
@@ -66,12 +70,9 @@ mod tests{
         }
     }
 
-
     #[test]
     fn percolation_opening_works_properly() {
-        let n = 10us;
-
-        let mut perc = Percolation::new(n);
+        let mut perc = Percolation::new(10us);
 
         perc.open(1, 1);
         assert!(perc.is_open(1, 1));
@@ -90,5 +91,17 @@ mod tests{
                 assert!(!perc.is_open(i, j));
             }
         }
+    }
+
+    #[test]
+    #[should_fail(expected = "Out of bounds: (9, 0)")]
+    fn percolation_is_open_for_out_of_bounds_should_fail() {
+        Percolation::new(10us).is_open(9, 0);
+    }
+
+    #[test]
+    #[should_fail(expected = "Out of bounds: (0, 5)")]
+    fn percolation_opening_out_of_bounds_should_fail() {
+        Percolation::new(10us).open(0, 5);
     }
 }
