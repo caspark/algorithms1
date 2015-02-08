@@ -1,5 +1,5 @@
 use std::iter;
-use conversions::{AsUsizeConverter, TryU32Converter};
+use conversions::TryU32Converter;
 use std::num::Int;
 use unionfind::{UnionFind, WeightedQuickUnionUF};
 
@@ -87,16 +87,18 @@ pub fn simulate(n: usize) -> f32 {
 
 pub fn simulate_multiple(n: usize, times: usize, jobs: u32) -> PercolationStats {
     use std::thread::Thread;
-    use std::sync::mpsc;
+    use std::sync::{Arc, Mutex, mpsc};
+
+    // simulation runs left. Data doesn't matter - it's only used to distribute work across jobs.
+    let sims_left = Arc::new(Mutex::new((0..times).collect::<Vec<usize>>()));
 
     let (tx, rx) = mpsc :: channel();
-    for job_num in 0 .. jobs {
+    for _ in 0 .. jobs {
         let tx = tx.clone();
+        let sims_left = sims_left.clone();
         Thread::spawn(move|| {
-            let simulations_to_run =
-                    times / jobs.as_usize() + if job_num.as_usize() < times % jobs.as_usize() { 1 } else { 0 };
-            // println!("Job {} will run {} simulations", job_num, simulations_to_run);
-            for _ in 0 .. simulations_to_run {
+            // acquire lock, fail if another task has failed, try to pop an item, and only continue if we got something
+            while sims_left.lock().unwrap().pop().is_some() {
                 tx.send(simulate(n)).unwrap();
             }
         });
