@@ -2,14 +2,18 @@
 #![feature(env)] // this was recently added so tell rust to be quiet about it
 #![feature(os)] // so we can turn OsString into normal strings
 #![feature(collections)] // so we can get the tail of a vector
+#![feature(test)] // so we can run benchmarks
 
 extern crate getopts;
 extern crate quickcheck;
 extern crate rand;
+extern crate test;
 
 mod conversions;
 mod unionfind;
 mod percolation;
+#[cfg(test)]
+mod benchmarks;
 
 fn main() {
     use std::env;
