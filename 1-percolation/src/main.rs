@@ -1,20 +1,21 @@
 #![feature(core)] // otherwise we get a warning from generated code of #[derive(Debug)]
+#![feature(env)] // this was recently added so tell rust to be quiet about it
+#![feature(os)] // so we can turn OsString into normal strings
+#![feature(collections)] // so we can get the tail of a vector
 
 extern crate getopts;
 extern crate quickcheck;
 extern crate rand;
-
-use getopts::Options;
 
 mod conversions;
 mod unionfind;
 mod percolation;
 
 fn main() {
+    use std::env;
     use getopts::Options;
-    use std::os;
 
-    let args: Vec<String> = os::args();
+    let args: Vec<String> = env::args().map(|os_string| os_string.into_string().unwrap()).collect();
 
     let mut opts = Options::new();
     opts.reqopt("n", "size", "Size of each side of the percolation board", "SIZE");
