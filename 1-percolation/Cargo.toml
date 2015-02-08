@@ -6,3 +6,4 @@ authors = ["Caspar Krieger <ckrieger@atlassian.com>"]
 
 [dependencies]
 quickcheck = "*"
+rand = "*"

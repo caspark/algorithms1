@@ -1,7 +1,7 @@
-#![feature(rand)] // so we can use random numbers without warnings
 #![feature(core)] // otherwise we get a warning from generated code of #[derive(Debug)]
 
 extern crate quickcheck;
+extern crate rand;
 
 mod conversions;
 mod unionfind;

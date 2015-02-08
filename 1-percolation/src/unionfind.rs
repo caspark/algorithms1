@@ -79,8 +79,8 @@ impl UnionFind for WeightedQuickUnionUF {
 }
 
 mod tests {
-    use std::rand;
-    use std::rand::Rng;
+    use rand;
+    use rand::Rng;
     use quickcheck::{StdGen, QuickCheck};
     use super::super::conversions::{AsUsizeConverter, TryU32Converter};
     use super::UnionFind;
