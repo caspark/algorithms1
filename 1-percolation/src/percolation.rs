@@ -1,5 +1,5 @@
 use std::iter;
-use conversions::TryU32Converter;
+use conversions::{AsUsizeConverter, TryU32Converter};
 use std::num::Int;
 use unionfind::{UnionFind, WeightedQuickUnionUF};
 
@@ -85,10 +85,26 @@ pub fn simulate(n: usize) -> f32 {
     (n*n - to_open.len()) as f32 / (n * n) as f32
 }
 
-pub fn simulate_multiple(n: usize, times: usize) -> PercolationStats {
-    let mut results = Vec::with_capacity(times as usize);
+pub fn simulate_multiple(n: usize, times: usize, jobs: u32) -> PercolationStats {
+    use std::thread::Thread;
+    use std::sync::mpsc;
+
+    let (tx, rx) = mpsc :: channel();
+    for job_num in 0 .. jobs {
+        // distribute simulations across threads relatively evenly
+        let run_count = times / jobs.as_usize() + { if job_num == 0 { times % jobs.as_usize() } else { 0 } };
+        // println!("Job {} will run {} simulations", job_num, run_count);
+        let tx = tx.clone();
+        Thread::spawn(move|| {
+            for _ in 0 .. run_count {
+                tx.send(simulate(n)).unwrap();
+            }
+        });
+    }
+    let mut results = Vec::with_capacity(times);
     for _ in 0 .. times {
-        results.push(simulate(n));
+        let r = rx.recv().unwrap();
+        results.push(r);
     }
     PercolationStats {
         results: results,
