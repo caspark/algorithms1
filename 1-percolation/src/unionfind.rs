@@ -12,6 +12,7 @@ pub struct QuickUnionUF {
 }
 
 impl QuickUnionUF {
+    #![allow(dead_code)]
     pub fn new(size: u32) -> QuickUnionUF {
         QuickUnionUF { id: (0u32..size).collect() }
     }
