@@ -1,6 +1,5 @@
 #![feature(core)] // otherwise we get a warning from generated code of #[derive(Debug)]
 #![feature(env)] // this was recently added so tell rust to be quiet about it
-#![feature(os)] // so we can turn OsString into normal strings
 #![feature(collections)] // so we can get the tail of a vector
 #![feature(test)] // so we can run benchmarks
 #![feature(std_misc)] // so we can spawn threads
@@ -20,7 +19,7 @@ fn main() {
     use std::env;
     use getopts::Options;
 
-    let args: Vec<String> = env::args().map(|os_string| os_string.into_string().unwrap()).collect();
+    let args: Vec<String> = env::args().collect();
 
     let mut opts = Options::new();
     opts.reqopt("n", "size", "Size of each side of the percolation board", "SIZE");
