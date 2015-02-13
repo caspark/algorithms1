@@ -24,13 +24,12 @@ impl<E> LinkedList<E> {
         self.size
     }
 
-    pub fn add_first(mut self, item: E) -> LinkedList<E> {
+    pub fn add_first(&mut self, item: E) {
         self.first = Some(Box::new(Node {
             item: item,
-            next: self.first,
+            next: self.first.take(), // take is necessary to take ownership of the item in the option
         }));
         self.size += 1;
-        self
     }
 }
 
@@ -41,8 +40,9 @@ mod tests {
 
     #[test]
     fn adding_should_increase_size() {
-        let sut = LinkedList::<u32>::new();
-        let sut = sut.add_first(0).add_first(1);
+        let mut sut = LinkedList::<u32>::new();
+        sut.add_first(0);
+        sut.add_first(1);
         assert_eq!(sut.len(), 2);
     }
 }
