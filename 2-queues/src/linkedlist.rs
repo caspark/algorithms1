@@ -7,6 +7,7 @@ struct Node<E> {
     next: Option<Box<Node<E>>>,
 }
 
+#[derive(Debug)]
 pub struct Iter<'a, E: 'a> {
     head: &'a Option<Box<Node<E>>>,
     nelem: usize,
