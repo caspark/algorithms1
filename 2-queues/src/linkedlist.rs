@@ -34,14 +34,11 @@ impl<E> LinkedList<E> {
 
     pub fn remove_first(&mut self) -> Option<E> {
         self.size -= 1;
-        let taken = self.first.take();
-        if taken.is_none() {
-            None
-        } else {
-            let node = *taken.unwrap();
-            self.first = node.next;
-            Some(node.item)
-        }
+        self.first.take().map(|boxed_node| {
+            let node = *boxed_node;
+            self.first = node.next; // mutating state in a map, wooo!
+            node.item
+        })
     }
 }
 
@@ -64,6 +61,7 @@ mod tests {
         sut.add_first(0);
         sut.add_first(1);
         assert_eq!(sut.remove_first(), Some(1));
+        assert_eq!(sut.remove_first(), Some(0));
     }
 
     #[test]
