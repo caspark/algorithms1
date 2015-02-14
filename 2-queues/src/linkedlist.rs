@@ -31,6 +31,18 @@ impl<E> LinkedList<E> {
         }));
         self.size += 1;
     }
+
+    pub fn remove_first(&mut self) -> Option<E> {
+        self.size -= 1;
+        let taken = self.first.take();
+        if taken.is_none() {
+            None
+        } else {
+            let node = *taken.unwrap();
+            self.first = node.next;
+            Some(node.item)
+        }
+    }
 }
 
 
@@ -44,5 +56,27 @@ mod tests {
         sut.add_first(0);
         sut.add_first(1);
         assert_eq!(sut.len(), 2);
+    }
+
+    #[test]
+    fn removing_should_get_previous_item_added() {
+        let mut sut = LinkedList::<u32>::new();
+        sut.add_first(0);
+        sut.add_first(1);
+        assert_eq!(sut.remove_first(), Some(1));
+    }
+
+    #[test]
+    fn removing_from_empty_should_get_none() {
+        let mut sut = LinkedList::<u32>::new();
+        assert_eq!(sut.remove_first(), None);
+    }
+
+    #[test]
+    fn removing_should_decrease_size() {
+        let mut sut = LinkedList::<u32>::new();
+        sut.add_first(1);
+        sut.remove_first();
+        assert_eq!(sut.len(), 0);
     }
 }
