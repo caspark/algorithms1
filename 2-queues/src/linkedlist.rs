@@ -1,4 +1,5 @@
 use std::option::Option;
+use std::iter::Iterator;
 
 #[derive(Debug)]
 struct Node<E> {
@@ -6,9 +7,14 @@ struct Node<E> {
     next: Option<Box<Node<E>>>,
 }
 
+pub struct Iter<'a, E: 'a> {
+    head: &'a Option<Box<Node<E>>>,
+    nelem: usize,
+}
+
 #[derive(Debug)]
 pub struct LinkedList<E> {
-    size: u32,
+    size: usize,
     first: Option<Box<Node<E>>>,
 }
 
@@ -20,7 +26,7 @@ impl<E> LinkedList<E> {
         }
     }
 
-    pub fn len(&self) -> u32 {
+    pub fn len(&self) -> usize {
         self.size
     }
 
@@ -38,6 +44,28 @@ impl<E> LinkedList<E> {
             let node = *boxed_node;
             self.first = node.next; // mutating state in a map, wooo!
             node.item
+        })
+    }
+
+    pub fn iter(&self) -> Iter<E> {
+        Iter {
+            nelem: self.len(),
+            head: &self.first,
+        }
+    }
+}
+
+impl<'a, A> Iterator for Iter<'a, A> {
+    type Item = &'a A;
+
+    fn next(&mut self) -> Option<&'a A> {
+        if self.nelem == 0 {
+            return None;
+        }
+        self.head.as_ref().map(|head| {
+            self.nelem -= 1;
+            self.head = &head.next;
+            &head.item
         })
     }
 }
@@ -76,5 +104,16 @@ mod tests {
         sut.add_first(1);
         sut.remove_first();
         assert_eq!(sut.len(), 0);
+    }
+
+    #[test]
+    fn iteration_should_work() {
+        let mut sut = LinkedList::<usize>::new();
+        sut.add_first(1);
+        sut.add_first(2);
+        sut.add_first(3);
+        for (i, &e) in sut.iter().enumerate() {
+            assert_eq!(sut.len() - i, e);
+        }
     }
 }
