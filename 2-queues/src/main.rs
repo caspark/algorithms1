@@ -1,2 +1,3 @@
 
+mod deque;
 mod linkedlist;
