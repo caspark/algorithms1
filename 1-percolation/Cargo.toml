@@ -2,7 +2,7 @@
 
 name = "1-percolation"
 version = "0.0.1"
-authors = ["Caspar Krieger <ckrieger@atlassian.com>"]
+authors = ["Caspar Krieger <caspar@asparck.com>"]
 
 [dependencies]
 quickcheck = "*"
