@@ -93,6 +93,23 @@ impl<E> Deque<E> {
         };
     }
 
+    pub fn add_last(&mut self, item: E) {
+        match self.last.resolve() {
+            None => self.add_first(item),
+            Some(last) => {
+                self.size += 1;
+                let mut boxed_new_last = Box::new(Node {
+                    item: item,
+                    next: None,
+                    prev: Rawlink::none(),
+                });
+                self.last = Rawlink::some(&mut *boxed_new_last);
+                boxed_new_last.prev = Rawlink::some(last);
+                last.next = Some(boxed_new_last);
+            },
+        };
+    }
+
     pub fn remove_first(&mut self) -> Option<E> {
         self.first.take().map(|mut boxed_first| {
             self.size -= 1;
@@ -166,6 +183,27 @@ mod tests {
     }
 
     #[test]
+    fn removing_first_and_adding_last_should_give_queue() {
+        let mut sut = Deque::<u32>::new();
+        sut.add_last(0);
+        sut.add_last(1);
+        assert_eq!(sut.remove_first(), Some(0));
+        assert_eq!(sut.remove_first(), Some(1));
+    }
+
+    #[test]
+    fn mixing_adding_first_and_last_should_work() {
+        let mut sut = Deque::<i32>::new();
+        sut.add_last(0);
+        sut.add_first(-1);
+        sut.add_last(1);
+        sut.add_last(2);
+        sut.add_first(-2);
+
+        assert_eq!(format!("{:?}", sut), "Deque [-2, -1, 0, 1, 2]");
+    }
+
+    #[test]
     fn removing_from_empty_should_get_none() {
         let mut sut = Deque::<u32>::new();
         assert_eq!(sut.remove_first(), None);
@@ -197,11 +235,12 @@ mod tests {
         sut.add_first(2);
         sut.add_first(1);
         sut.add_first(0);
+        sut.add_last(4);
         sut.remove_first();
-        assert_eq!(format!("{:?}", sut), "Deque [1, 2, 3]");
+        assert_eq!(format!("{:?}", sut), "Deque [1, 2, 3, 4]");
 
         let mut current = sut.last.resolve();
-        let mut i = 3;
+        let mut i = 4;
         while current.is_some() {
             let current_item = current.as_ref().unwrap().item;
             assert_eq!(i, current_item);
