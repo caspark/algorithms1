@@ -2,12 +2,6 @@ use std::option::Option;
 use std::iter::Iterator;
 use std::{mem, ptr, fmt};
 
-struct Node<E> {
-    item: E,
-    next: Option<Box<Node<E>>>,
-    prev: Rawlink<Node<E>>,
-}
-
 // copied from Rust std's DList's Rawlink
 struct Rawlink<E> {
     p: *mut E,
@@ -49,21 +43,29 @@ impl<T> Rawlink<T> {
     }
 }
 
+struct Node<E> {
+    item: E,
+    next: Option<Box<Node<E>>>,
+    prev: Rawlink<Node<E>>,
+}
+
 pub struct Iter<'a, E: 'a> {
-    head: &'a Option<Box<Node<E>>>,
-    nelem: usize,
+    current: &'a Option<Box<Node<E>>>,
+    items_remaining: usize,
 }
 
 pub struct Deque<E> {
     size: usize,
     first: Option<Box<Node<E>>>,
+    last: Rawlink<Node<E>>,
 }
 
 impl<E> Deque<E> {
     pub fn new() -> Deque<E> {
         Deque {
-            first: None,
             size: 0,
+            first: None,
+            last: Rawlink::none(),
         }
     }
 
@@ -79,7 +81,10 @@ impl<E> Deque<E> {
             prev: Rawlink::none(),
         });
         match self.first {
-            None => self.first = Some(boxed_new_head),
+            None => {
+                self.last = Rawlink::some(&mut boxed_new_head);
+                self.first = Some(boxed_new_head);
+            },
             Some(ref mut head) => {
                 head.prev = Rawlink::some(&mut *boxed_new_head);
                 mem::swap(head, &mut boxed_new_head);
@@ -92,7 +97,7 @@ impl<E> Deque<E> {
         self.first.take().map(|mut boxed_first_node| {
             self.size -= 1;
             match boxed_first_node.next.take() {
-                None => {} //nothing to do here
+                None => self.last = Rawlink::none(),
                 Some(mut node) => {
                     node.prev = Rawlink::none();
                     self.first = Some(node);
@@ -104,8 +109,8 @@ impl<E> Deque<E> {
 
     pub fn iter(&self) -> Iter<E> {
         Iter {
-            nelem: self.len(),
-            head: &self.first,
+            items_remaining: self.len(),
+            current: &self.first,
         }
     }
 }
@@ -114,13 +119,13 @@ impl<'a, A> Iterator for Iter<'a, A> {
     type Item = &'a A;
 
     fn next(&mut self) -> Option<&'a A> {
-        if self.nelem == 0 {
+        if self.items_remaining == 0 {
             return None;
         }
-        self.head.as_ref().map(|head| {
-            self.nelem -= 1;
-            self.head = &head.next;
-            &head.item
+        self.current.as_ref().map(|current| {
+            self.items_remaining -= 1;
+            self.current = &current.next;
+            &current.item
         })
     }
 }
@@ -174,8 +179,6 @@ mod tests {
         assert_eq!(sut.len(), 0);
     }
 
-    //TODO write and test backwards iteration
-
     #[test]
     fn iteration_should_work() {
         let mut sut = Deque::<usize>::new();
@@ -184,6 +187,26 @@ mod tests {
         sut.add_first(3);
         for (i, &e) in sut.iter().enumerate() {
             assert_eq!(sut.len() - i, e);
+        }
+    }
+
+    #[test]
+    fn prev_links_should_allow_iterating_backwards() {
+        let mut sut = Deque::new();
+        sut.add_first(3);
+        sut.add_first(2);
+        sut.add_first(1);
+        sut.add_first(0);
+        sut.remove_first();
+        assert_eq!(format!("{:?}", sut), "Deque [1, 2, 3]");
+
+        let mut current = sut.last.resolve();
+        let mut i = 3;
+        while current.is_some() {
+            let current_item = current.as_ref().unwrap().item;
+            assert_eq!(i, current_item);
+            current = current.unwrap().prev.resolve();
+            i -= 1;
         }
     }
 
