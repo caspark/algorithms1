@@ -8,9 +8,8 @@ pub struct RandomQueue<E> {
 
 
 #[derive(Debug)]
-pub struct Iter<'a, E: 'a> {
+pub struct Iter<E> {
     vec: Vec<E>,
-    nelem: usize,
 }
 
 impl <E: Clone> RandomQueue<E> {
@@ -60,10 +59,25 @@ impl <E: Clone> RandomQueue<E> {
     }
 
     fn iter(&self) -> Iter<E> {
-        panic!("Not yet implemented");
+        let mut items = self.vec.clone();
+        let mut rng = rand::thread_rng();
+        for i in 0 .. items.len() {
+            let r = rng.gen_range(0, items.len());
+            items.as_mut_slice().swap(i, r);
+        }
+        Iter {
+            vec: items,
+        }
     }
 }
 
+impl<E> Iterator for Iter<E> {
+    type Item = E;
+
+    fn next(&mut self) -> Option<E> {
+        self.vec.pop()
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -120,5 +134,19 @@ mod tests {
         assert_eq!(sut.vec.capacity(), 8);
         sut.dequeue(); // 1 after dequeue
         assert_eq!(sut.vec.capacity(), 4);
+    }
+
+    #[test]
+    fn iteration_includes_all_items_once() {
+        let mut sut = RandomQueue::new();
+        let original = vec![1,2,3,4];
+        for &i in original.iter() {
+            sut.enqueue(i.clone());
+        }
+
+        let mut randomized = sut.iter().collect::<Vec<u32>>();
+        randomized.as_mut_slice().sort();
+
+        assert_eq!(randomized, original);
     }
 }
