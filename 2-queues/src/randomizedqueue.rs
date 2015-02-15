@@ -13,17 +13,17 @@ pub struct Iter<E> {
 }
 
 impl <E: Clone> RandomQueue<E> {
-    fn new() -> RandomQueue<E> {
+    pub fn new() -> RandomQueue<E> {
         RandomQueue {
             vec: Vec::with_capacity(2)
         }
     }
 
-    fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.vec.len()
     }
 
-    fn enqueue(&mut self, item: E) {
+    pub fn enqueue(&mut self, item: E) {
         if self.vec.len() == self.vec.capacity() {
             // unnecessary resize time!
             let mut new_vec = Vec::with_capacity(self.vec.capacity() * 2);
@@ -33,7 +33,7 @@ impl <E: Clone> RandomQueue<E> {
         self.vec.push(item);
     }
 
-    fn dequeue(&mut self) -> Option<E> {
+    pub fn dequeue(&mut self) -> Option<E> {
         if self.vec.len() == 0 {
             return None;
         }
@@ -49,7 +49,7 @@ impl <E: Clone> RandomQueue<E> {
         self.vec.pop()
     }
 
-    fn sample(&self) -> Option<E> {
+    pub fn sample(&self) -> Option<E> {
         if self.len() == 0 {
             None
         } else {
@@ -58,7 +58,7 @@ impl <E: Clone> RandomQueue<E> {
         }
     }
 
-    fn iter(&self) -> Iter<E> {
+    pub fn iter(&self) -> Iter<E> {
         let mut items = self.vec.clone();
         let mut rng = rand::thread_rng();
         for i in 0 .. items.len() {
