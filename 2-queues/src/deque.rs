@@ -1,19 +1,59 @@
 use std::option::Option;
 use std::iter::Iterator;
+use std::{mem, ptr, fmt};
 
-#[derive(Debug)]
 struct Node<E> {
     item: E,
     next: Option<Box<Node<E>>>,
+    prev: Rawlink<Node<E>>,
 }
 
-#[derive(Debug)]
+// copied from Rust std's DList's Rawlink
+struct Rawlink<E> {
+    p: *mut E,
+}
+
+// copied from Rust std's DList's Rawlink; this is like Option but for a raw pointer
+impl<T> Rawlink<T> {
+    #![allow(dead_code)]
+
+    /// Like Option::None for Rawlink
+    fn none() -> Rawlink<T> {
+        Rawlink{p: ptr::null_mut()}
+    }
+
+    /// Like Option::Some for Rawlink
+    fn some(n: &mut T) -> Rawlink<T> {
+        Rawlink{p: n}
+    }
+
+    /// Convert the `Rawlink` into an Option value
+    fn resolve_immut<'a>(&self) -> Option<&'a T> {
+        unsafe {
+            mem::transmute(self.p.as_ref())
+        }
+    }
+
+    /// Convert the `Rawlink` into an Option value
+    fn resolve<'a>(&mut self) -> Option<&'a mut T> {
+        if self.p.is_null() {
+            None
+        } else {
+            Some(unsafe { mem::transmute(self.p) })
+        }
+    }
+
+    /// Return the `Rawlink` and replace with `Rawlink::none()`
+    fn take(&mut self) -> Rawlink<T> {
+        mem::replace(self, Rawlink::none())
+    }
+}
+
 pub struct Iter<'a, E: 'a> {
     head: &'a Option<Box<Node<E>>>,
     nelem: usize,
 }
 
-#[derive(Debug)]
 pub struct Deque<E> {
     size: usize,
     first: Option<Box<Node<E>>>,
@@ -32,19 +72,33 @@ impl<E> Deque<E> {
     }
 
     pub fn add_first(&mut self, item: E) {
-        self.first = Some(Box::new(Node {
-            item: item,
-            next: self.first.take(), // take is necessary to take ownership of the item in the option
-        }));
         self.size += 1;
+        let mut boxed_new_head = Box::new(Node {
+            item: item,
+            next: None,
+            prev: Rawlink::none(),
+        });
+        match self.first {
+            None => self.first = Some(boxed_new_head),
+            Some(ref mut head) => {
+                head.prev = Rawlink::some(&mut *boxed_new_head);
+                mem::swap(head, &mut boxed_new_head);
+                head.next = Some(boxed_new_head);
+            },
+        };
     }
 
     pub fn remove_first(&mut self) -> Option<E> {
-        self.size -= 1;
-        self.first.take().map(|boxed_node| {
-            let node = *boxed_node;
-            self.first = node.next; // mutating state in a map, wooo!
-            node.item
+        self.first.take().map(|mut boxed_first_node| {
+            self.size -= 1;
+            match boxed_first_node.next.take() {
+                None => {} //nothing to do here
+                Some(mut node) => {
+                    node.prev = Rawlink::none();
+                    self.first = Some(node);
+                }
+            }
+            boxed_first_node.item
         })
     }
 
@@ -68,6 +122,19 @@ impl<'a, A> Iterator for Iter<'a, A> {
             self.head = &head.next;
             &head.item
         })
+    }
+}
+
+impl<A: fmt::Debug> fmt::Debug for Deque<A> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        try!(write!(f, "Deque ["));
+
+        for (i, e) in self.iter().enumerate() {
+            if i != 0 { try!(write!(f, ", ")); }
+            try!(write!(f, "{:?}", *e));
+        }
+
+        write!(f, "]")
     }
 }
 
@@ -107,6 +174,8 @@ mod tests {
         assert_eq!(sut.len(), 0);
     }
 
+    //TODO write and test backwards iteration
+
     #[test]
     fn iteration_should_work() {
         let mut sut = Deque::<usize>::new();
@@ -116,5 +185,33 @@ mod tests {
         for (i, &e) in sut.iter().enumerate() {
             assert_eq!(sut.len() - i, e);
         }
+    }
+
+    #[test]
+    fn removing_first_should_prev_link_on_new_first_node() {
+        let mut sut = Deque::new();
+        sut.add_first(0);
+        sut.add_first(1);
+        {
+            sut.remove_first();
+        }
+        let maybe_prev_node = (*sut.first.unwrap()).prev.resolve_immut();
+        assert!(maybe_prev_node.is_none(), "New first node should not be pointing to removed first node");
+    }
+
+    #[test]
+    fn test_show() {
+        let mut sut = Deque::new();
+        sut.add_first(3);
+        sut.add_first(2);
+        sut.add_first(1);
+        assert_eq!(format!("{:?}", sut), "Deque [1, 2, 3]");
+
+        let mut sut = Deque::new();
+        sut.add_first("test");
+        sut.add_first("more");
+        sut.add_first("one");
+        sut.add_first("just");
+        assert_eq!(format!("{:?}", sut), "Deque [\"just\", \"one\", \"more\", \"test\"]");
     }
 }
