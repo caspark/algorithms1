@@ -5,8 +5,10 @@
 #![feature(std_misc)] // so we can spawn threads
 
 extern crate getopts;
+#[cfg(test)]
 extern crate quickcheck;
 extern crate rand;
+#[cfg(test)]
 extern crate test;
 
 mod conversions;
