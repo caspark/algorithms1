@@ -22,6 +22,10 @@ impl Point {
             ((other.y - self.y) as f64) / ((other.x - self.x) as f64)
         }
     }
+
+    fn cmp_by_relative_slope(&self, a: &Point, b: &Point) -> Option<cmp::Ordering> {
+        self.slope_to(a).partial_cmp(&self.slope_to(b))
+    }
 }
 
 /// Compares by Y coordinates, breaking ties by X coordinates
@@ -52,12 +56,11 @@ impl cmp::Ord for Point {
     }
 }
 
-// TODO a second comparator, which compares by slope
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::f64;
+    use std::cmp::Ordering;
 
     #[test]
     fn points_ordering_should_be_by_y_coord_then_by_x_coord() {
@@ -95,5 +98,16 @@ mod tests {
         assert_eq!(Point::new(1, 2).slope_to(&Point::new(0, 0)), 2f64);
         assert_eq!(Point::new(0, 0).slope_to(&Point::new(2, 1)), 0.5f64);
         assert_eq!(Point::new(2, 1).slope_to(&Point::new(0, 0)), 0.5f64);
+    }
+
+    #[test]
+    fn comparing_by_slope_considers_points_on_a_line_equal() {
+        let base = Point::new(1, 1);
+
+        assert_eq!(base.cmp_by_relative_slope(&Point::new(2, 1), &Point::new(2, 2)).unwrap(), Ordering::Less);
+        assert_eq!(base.cmp_by_relative_slope(&Point::new(2, 2), &Point::new(2, 1)).unwrap(), Ordering::Greater);
+
+        assert_eq!(base.cmp_by_relative_slope(&Point::new(2, 2), &Point::new(3, 3)).unwrap(), Ordering::Equal);
+        assert_eq!(base.cmp_by_relative_slope(&Point::new(3, 3), &Point::new(2, 2)).unwrap(), Ordering::Equal);
     }
 }
