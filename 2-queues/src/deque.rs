@@ -48,6 +48,8 @@ pub struct Deque<E> {
     last: Rawlink<Node<E>>,
 }
 
+/// A Deque with constant time push and pop operations on each end.
+/// Use std's DList instead for any production code.
 impl<E> Deque<E> {
     pub fn new() -> Deque<E> {
         Deque {
