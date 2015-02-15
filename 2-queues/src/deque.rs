@@ -75,35 +75,35 @@ impl<E> Deque<E> {
 
     pub fn add_first(&mut self, item: E) {
         self.size += 1;
-        let mut boxed_new_head = Box::new(Node {
+        let mut boxed_new_first = Box::new(Node {
             item: item,
             next: None,
             prev: Rawlink::none(),
         });
         match self.first {
             None => {
-                self.last = Rawlink::some(&mut boxed_new_head);
-                self.first = Some(boxed_new_head);
+                self.last = Rawlink::some(&mut boxed_new_first);
+                self.first = Some(boxed_new_first);
             },
-            Some(ref mut head) => {
-                head.prev = Rawlink::some(&mut *boxed_new_head);
-                mem::swap(head, &mut boxed_new_head);
-                head.next = Some(boxed_new_head);
+            Some(ref mut first) => {
+                first.prev = Rawlink::some(&mut *boxed_new_first);
+                mem::swap(first, &mut boxed_new_first);
+                first.next = Some(boxed_new_first);
             },
         };
     }
 
     pub fn remove_first(&mut self) -> Option<E> {
-        self.first.take().map(|mut boxed_first_node| {
+        self.first.take().map(|mut boxed_first| {
             self.size -= 1;
-            match boxed_first_node.next.take() {
+            match boxed_first.next.take() {
                 None => self.last = Rawlink::none(),
                 Some(mut node) => {
                     node.prev = Rawlink::none();
                     self.first = Some(node);
                 }
             }
-            boxed_first_node.item
+            boxed_first.item
         })
     }
 
