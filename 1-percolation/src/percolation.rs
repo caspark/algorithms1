@@ -66,8 +66,7 @@ impl Percolation {
 }
 
 pub fn simulate(n: usize) -> f32 {
-    use rand;
-    use rand::Rng;
+    use rand::{self, Rng};
 
     let mut to_open: Vec<(usize, usize)> = Vec::with_capacity(n * n);
     for i in 1 .. (n + 1) {
