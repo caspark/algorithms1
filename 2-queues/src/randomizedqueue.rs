@@ -35,20 +35,27 @@ impl <E: Clone> RandomQueue<E> {
     }
 
     fn dequeue(&mut self) -> Option<E> {
+        if self.vec.len() == 0 {
+            return None;
+        }
         if self.vec.len() == self.vec.capacity() / 4 {
             // unnecessary resize time!
             let mut new_vec = Vec::with_capacity(self.vec.capacity() / 2);
             new_vec.push_all(&self.vec[]);
             self.vec = new_vec;
         }
-        self.vec.pop() //FIXME make this random
+        let curr_len = self.vec.len();
+        let picked = rand::thread_rng().gen_range(0, curr_len);
+        self.vec.as_mut_slice().swap(picked, curr_len - 1);
+        self.vec.pop()
     }
 
     fn sample(&self) -> Option<E> {
         if self.len() == 0 {
             None
         } else {
-            Some(self.vec[self.vec.len() - 1].clone()) //FIXME make this random
+            let picked = rand::thread_rng().gen_range(0, self.vec.len());
+            Some(self.vec[picked].clone())
         }
     }
 
