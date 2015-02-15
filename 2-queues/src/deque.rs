@@ -9,8 +9,6 @@ struct Rawlink<E> {
 
 // copied from Rust std's DList's Rawlink; this is like Option but for a raw pointer
 impl<T> Rawlink<T> {
-    #![allow(dead_code)]
-
     /// Like Option::None for Rawlink
     fn none() -> Rawlink<T> {
         Rawlink{p: ptr::null_mut()}
@@ -22,13 +20,6 @@ impl<T> Rawlink<T> {
     }
 
     /// Convert the `Rawlink` into an Option value
-    fn resolve_immut<'a>(&self) -> Option<&'a T> {
-        unsafe {
-            mem::transmute(self.p.as_ref())
-        }
-    }
-
-    /// Convert the `Rawlink` into an Option value
     fn resolve<'a>(&mut self) -> Option<&'a mut T> {
         if self.p.is_null() {
             None
@@ -36,12 +27,9 @@ impl<T> Rawlink<T> {
             Some(unsafe { mem::transmute(self.p) })
         }
     }
-
-    /// Return the `Rawlink` and replace with `Rawlink::none()`
-    fn take(&mut self) -> Rawlink<T> {
-        mem::replace(self, Rawlink::none())
-    }
 }
+
+impl<T> Copy for Rawlink<T> {}
 
 struct Node<E> {
     item: E,
@@ -115,12 +103,23 @@ impl<E> Deque<E> {
             self.size -= 1;
             match boxed_first.next.take() {
                 None => self.last = Rawlink::none(),
-                Some(mut node) => {
-                    node.prev = Rawlink::none();
-                    self.first = Some(node);
+                Some(mut second_node) => {
+                    second_node.prev = Rawlink::none();
+                    self.first = Some(second_node);
                 }
             }
             boxed_first.item
+        })
+    }
+
+    pub fn remove_last(&mut self) -> Option<E> {
+        self.last.resolve().and_then(|last| {
+            self.size -= 1;
+            self.last = last.prev;
+            match last.prev.resolve() {
+                None => self.first.take(),
+                Some(second_last_node) => second_last_node.next.take(),
+            }.map(|node| node.item)
         })
     }
 
@@ -183,7 +182,7 @@ mod tests {
     }
 
     #[test]
-    fn removing_first_and_adding_last_should_give_queue() {
+    fn adding_last_and_removing_first_should_give_queue() {
         let mut sut = Deque::<u32>::new();
         sut.add_last(0);
         sut.add_last(1);
@@ -192,15 +191,27 @@ mod tests {
     }
 
     #[test]
-    fn mixing_adding_first_and_last_should_work() {
+    fn adding_first_and_removing_last_should_give_queue() {
+        let mut sut = Deque::<u32>::new();
+        sut.add_first(0);
+        sut.add_first(1);
+        assert_eq!(sut.remove_last(), Some(0));
+        assert_eq!(sut.remove_last(), Some(1));
+    }
+
+    #[test]
+    fn mixing_adding_and_removing_first_and_last_should_work() {
         let mut sut = Deque::<i32>::new();
         sut.add_last(0);
         sut.add_first(-1);
         sut.add_last(1);
         sut.add_last(2);
         sut.add_first(-2);
-
         assert_eq!(format!("{:?}", sut), "Deque [-2, -1, 0, 1, 2]");
+
+        assert_eq!(sut.remove_last().unwrap(), 2);
+        assert_eq!(sut.remove_first().unwrap(), -2);
+        assert_eq!(sut.len(), 3);
     }
 
     #[test]
@@ -257,7 +268,7 @@ mod tests {
         {
             sut.remove_first();
         }
-        let maybe_prev_node = (*sut.first.unwrap()).prev.resolve_immut();
+        let maybe_prev_node = (*sut.first.unwrap()).prev.resolve();
         assert!(maybe_prev_node.is_none(), "New first node should not be pointing to removed first node");
     }
 
