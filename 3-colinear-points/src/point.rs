@@ -7,11 +7,11 @@ pub struct Point {
 }
 
 impl Point {
-    fn new(x: i32, y: i32) -> Point {
+    pub fn new(x: i32, y: i32) -> Point {
         Point{x: x, y: y}
     }
 
-    fn slope_to(&self, other: &Point) -> f64 {
+    pub fn slope_to(&self, other: &Point) -> f64 {
         if self == other {
             f64::NEG_INFINITY
         } else if self.y == other.y {
@@ -23,7 +23,7 @@ impl Point {
         }
     }
 
-    fn cmp_by_relative_slope(&self, a: &Point, b: &Point) -> Option<cmp::Ordering> {
+    pub fn cmp_by_relative_slope(&self, a: &Point, b: &Point) -> Option<cmp::Ordering> {
         self.slope_to(a).partial_cmp(&self.slope_to(b))
     }
 }

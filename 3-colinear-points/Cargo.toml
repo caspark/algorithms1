@@ -4,6 +4,10 @@ name = "colinear-points"
 version = "0.0.1"
 authors = ["Caspar Krieger <caspar@asparck.com>"]
 
+[dependencies]
+regex = "*"
+regex_macros = "*"
+
 [dependencies.piston]
 git = "https://github.com/PistonDevelopers/piston.git"
 
