@@ -1,17 +1,20 @@
-#![feature(core)]
-#![feature(plugin)]
-#![feature(env)]
 #![feature(collections)]
+#![feature(core)]
+#![feature(env)]
 #![feature(fs)]
 #![feature(io)]
+#![feature(plugin)]
+
 #![plugin(regex_macros)]
 
 #[macro_use]
 extern crate mdo;
+
 extern crate piston;
 extern crate graphics;
 extern crate sdl2_window;
 extern crate opengl_graphics;
+
 extern crate regex;
 
 use std::env;
@@ -22,7 +25,6 @@ mod parser;
 mod point;
 
 fn main() {
-
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
         println!("Error: missing filename argument: should be the path to a plain text input file");

@@ -1,9 +1,9 @@
+use graphics::{self, Context, Rectangle, RelativeTransform};
 use std::cell::RefCell;
+use opengl_graphics::{Gl, OpenGL};
 use piston::window::WindowSettings;
 use piston::event::{events, RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
-use graphics::{self, Context, Rectangle, RelativeTransform};
 use sdl2_window::Sdl2Window as Window;
-use opengl_graphics::{Gl, OpenGL};
 
 struct App {
     gl: Gl,       // OpenGL drawing backend.
