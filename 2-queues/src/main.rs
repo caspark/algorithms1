@@ -1,4 +1,6 @@
 #![feature(collections)] // for Vec.push_all()
+#![feature(env)]
+#![feature(io)]
 
 extern crate rand;
 
@@ -19,7 +21,7 @@ fn main() {
         Ok(k) => {
             use randomizedqueue::RandomQueue;
             use std::str;
-            use std::old_io::{self, IoError, IoErrorKind};
+            use std::old_io::{self, IoErrorKind};
 
             let mut stdin = old_io::stdin();
             let mut randomq = RandomQueue::new();
