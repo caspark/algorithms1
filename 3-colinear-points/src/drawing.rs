@@ -38,14 +38,14 @@ impl App {
 pub fn display() {
     // Create an SDL window.
     let window = Window::new(
-        OpenGL::_3_2,
+        OpenGL::_2_1,
         WindowSettings::default()
     );
     let window = RefCell::new(window);
 
     // Create a new game and run it.
     let mut app = App {
-        gl: Gl::new(OpenGL::_3_2),
+        gl: Gl::new(OpenGL::_2_1),
         rotation: 0.0
     };
 
