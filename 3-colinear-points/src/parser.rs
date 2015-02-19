@@ -2,7 +2,6 @@ use std::io::prelude::*;
 use std::fs::File;
 use std::io;
 use std::iter::IteratorExt;
-use regex::Regex;
 
 pub fn read_input_file(filename: &String) -> io::Result<Vec<(i32, i32)>> {
 
@@ -15,7 +14,7 @@ pub fn read_input_file(filename: &String) -> io::Result<Vec<(i32, i32)>> {
 
     let mut points = Vec::new();
 
-    for mut line in content.split_str("\n").skip(1) {
+    for line in content.split_str("\n").skip(1) {
         if line.len() == 0 {
             break; // end of file
         }

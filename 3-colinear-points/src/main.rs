@@ -1,4 +1,9 @@
+#![feature(core)]
 #![feature(plugin)]
+#![feature(env)]
+#![feature(collections)]
+#![feature(fs)]
+#![feature(io)]
 #![plugin(regex_macros)]
 
 #[macro_use]
