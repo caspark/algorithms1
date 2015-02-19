@@ -7,6 +7,7 @@ authors = ["Caspar Krieger <caspar@asparck.com>"]
 [dependencies]
 regex = "*"
 regex_macros = "*"
+mdo = "*"
 
 [dependencies.piston]
 git = "https://github.com/PistonDevelopers/piston.git"

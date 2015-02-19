@@ -1,6 +1,8 @@
 #![feature(plugin)]
 #![plugin(regex_macros)]
 
+#[macro_use]
+extern crate mdo;
 extern crate piston;
 extern crate graphics;
 extern crate sdl2_window;

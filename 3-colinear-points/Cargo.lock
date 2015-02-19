@@ -2,6 +2,7 @@
 name = "colinear-points"
 version = "0.0.1"
 dependencies = [
+ "mdo 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "piston 0.0.5 (git+https://github.com/PistonDevelopers/piston.git)",
  "piston2d-graphics 0.0.17 (git+https://github.com/PistonDevelopers/graphics.git)",
  "piston2d-opengl_graphics 0.0.8 (git+https://github.com/PistonDevelopers/opengl_graphics.git)",
@@ -108,6 +109,11 @@ dependencies = [
 [[package]]
 name = "log"
 version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "mdo"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]

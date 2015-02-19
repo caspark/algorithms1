@@ -19,12 +19,19 @@ pub fn read_input_file(filename: &String) -> io::Result<Vec<(i32, i32)>> {
         if line.len() == 0 {
             break; // end of file
         }
-        let coords = re.captures(line).and_then(|caps| {
-            caps.name("x").and_then(|x_str| x_str.parse().ok()).and_then(|x| {
-                caps.name("y").and_then(|y_str| y_str.parse().ok()).map(|y| (x, y))
-            })
-        }).expect(&format!("Failed to parse line '{}'", line));
-        points.push(coords);
+
+        let coords = {
+            use mdo::option::{bind, ret};
+            mdo! {
+                caps =<< re.captures(line).as_ref();
+                x_str =<< caps.name("x");
+                x =<< x_str.parse().ok();
+                y_str =<< caps.name("y");
+                y =<< y_str.parse().ok();
+                ret ret((x, y))
+            }
+        };
+        points.push(coords.expect(&format!("Failed to parse line '{}'", line)));
     }
     Ok(points)
 }
