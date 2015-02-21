@@ -49,15 +49,16 @@ pub fn display(points: &[Point], incoming_lines: Receiver<[i32; 4]>) {
 
             let context = &Context::abs(args.width as f64, args.height as f64)
                             .scale(scale_x, scale_y)
-                            .trans(-min_x, -min_y);
+                            .flip_v()
+                            .trans(-min_x, -min_y - max_y); // also do "- max_y" because we flip_v'd earlier
 
             let red_line = Line::new([1.0, 0.0, 0.0, 1.0], 500f64 * cmp::partial_max(scale_x, scale_y).unwrap_or(scale_x));
             for line in &lines {
                 red_line.draw(*line, context, gl);
             }
 
-            let dot_sx = 3f64 / scale_x;
-            let dot_sy = 3f64 / scale_y;
+            let dot_sx = 1f64 / scale_x;
+            let dot_sy = 1f64 / scale_y;
 
             let blue_rect = Rectangle::new([0.0, 0.0, 1.0, 1.0]);
             for point in points {
