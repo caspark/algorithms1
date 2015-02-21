@@ -1,4 +1,4 @@
-use graphics::{self, Context, Rectangle, RelativeTransform};
+use graphics::{self, Context, rectangle, Rectangle, RelativeTransform};
 use std::cell::RefCell;
 use opengl_graphics::{Gl, OpenGL};
 use piston::window::WindowSettings;
@@ -16,9 +16,8 @@ struct App<'a> {
 
 impl<'a> App<'a> {
     fn render(&mut self, _: &mut Window, args: &RenderArgs) {
-        const COLOR_BLACK:    [f32; 4] = [0.0, 0.0, 0.0, 1.0];
-        const COLOR_GREEN:  [f32; 4] = [0.0, 1.0, 0.0, 1.0];
-        const COLOR_BLUE:  [f32; 4] = [0.0, 0.0, 1.0, 1.0];
+        let gl = &mut self.gl;
+        graphics::clear([0.0, 0.0, 0.0, 1.0], gl);
 
         let min_x = self.bounds[0] as f64;
         let max_x = self.bounds[1] as f64;
@@ -27,22 +26,23 @@ impl<'a> App<'a> {
         let max_y = self.bounds[3] as f64;
         let scale_y = args.height as f64 / (max_y - min_y);
 
-        let dot_sx = 2f64 / scale_x;
-        let dot_sy = 2f64 / scale_y;
-
         let context = &Context::abs(args.width as f64, args.height as f64)
                         .scale(scale_x, scale_y)
                         .trans(-min_x, -min_y);
 
-        graphics::clear(COLOR_BLACK, &mut self.gl);
+        let dot_sx = 2f64 / scale_x;
+        let dot_sy = 2f64 / scale_y;
+
+        let blue_rect = Rectangle::new([0.0, 0.0, 1.0, 1.0]);
         for point in self.points {
-            Rectangle::new(COLOR_BLUE).draw(graphics::rectangle::centered([point.x as f64, point.y as f64, dot_sx, dot_sy]), context, &mut self.gl);
+            blue_rect.draw(rectangle::centered([point.x as f64, point.y as f64, dot_sx, dot_sy]), context, gl);
         }
 
-        Rectangle::new(COLOR_GREEN).draw(graphics::rectangle::centered([min_x, min_y, dot_sx, dot_sy]), context, &mut self.gl);
-        Rectangle::new(COLOR_GREEN).draw(graphics::rectangle::centered([min_x, max_y, dot_sx, dot_sy]), context, &mut self.gl);
-        Rectangle::new(COLOR_GREEN).draw(graphics::rectangle::centered([max_x, min_y, dot_sx, dot_sy]), context, &mut self.gl);
-        Rectangle::new(COLOR_GREEN).draw(graphics::rectangle::centered([max_x, max_y, dot_sx, dot_sy]), context, &mut self.gl);
+        let green_rect = Rectangle::new([0.0, 1.0, 0.0, 1.0]);
+        green_rect.draw(rectangle::centered([min_x, min_y, dot_sx, dot_sy]), context, gl);
+        green_rect.draw(rectangle::centered([min_x, max_y, dot_sx, dot_sy]), context, gl);
+        green_rect.draw(rectangle::centered([max_x, min_y, dot_sx, dot_sy]), context, gl);
+        green_rect.draw(rectangle::centered([max_x, max_y, dot_sx, dot_sy]), context, gl);
     }
 
     fn update(&mut self, _: &mut Window, args: &UpdateArgs) {
