@@ -76,14 +76,13 @@ pub fn find_colinear_points_fast(points: &[Point], line_sender: &Sender<Option<[
         }
 
         let line = {
-            //FIXME should be unnecessary to copy here
-            let mut v = Vec::with_capacity(last - first);
-            v.push(origin.clone());
-            for p in &sortable_points[first..last] {
-                v.push(p.clone());
+            let mut v = Vec::with_capacity(last - first + 1);
+            v.push(origin);
+            for ref p in &sortable_points[first..last] {
+                v.push(p);
             }
             v.sort();
-            if &v[0] != origin {
+            if v[0] != origin {
                 return; // avoid reporting the same line more than once
             }
             let last = v.len() - 1;
