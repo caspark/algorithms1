@@ -1,4 +1,4 @@
-use graphics::{self, Context, Line, rectangle, Rectangle, RelativeTransform};
+use graphics::{self, Context, Ellipse, Line, rectangle, Rectangle, RelativeTransform};
 use std::cell::RefCell;
 use opengl_graphics::{Gl, OpenGL};
 use piston::window::WindowSettings;
@@ -53,17 +53,17 @@ pub fn display(points: &[Point], incoming_lines: Receiver<Option<[i32; 4]>>) {
                             .flip_v()
                             .trans(-min_x, -min_y - max_y); // also do "- max_y" because we flip_v'd earlier
 
+            let dot_sx = 3f64 / scale_x;
+            let dot_sy = 3f64 / scale_y;
+
+            let blue_dot = Ellipse::new([0.0, 0.0, 1.0, 1.0]);
+            for p in points {
+                blue_dot.draw(rectangle::centered([p.x as f64, p.y as f64, dot_sx, dot_sy]), context, gl);
+            }
+
             let red_line = Line::new([1.0, 0.0, 0.0, 1.0], 1f64 / cmp::partial_min(scale_x, scale_y).unwrap_or(scale_x));
             for line in &lines {
                 red_line.draw(*line, context, gl);
-            }
-
-            let dot_sx = 1f64 / scale_x;
-            let dot_sy = 1f64 / scale_y;
-
-            let blue_rect = Rectangle::new([0.0, 0.0, 1.0, 1.0]);
-            for point in points {
-                blue_rect.draw(rectangle::centered([point.x as f64, point.y as f64, dot_sx, dot_sy]), context, gl);
             }
 
             let green_rect = Rectangle::new([0.0, 1.0, 0.0, 1.0]);
