@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use opengl_graphics::{Gl, OpenGL};
 use piston::window::WindowSettings;
 use piston::event::{events, RenderEvent, UpdateEvent};
-use sdl2_window::Sdl2Window as Window;
+use sdl2_window::Sdl2Window;
 use point::Point;
 use std::iter::IteratorExt;
 use std::sync::mpsc::Receiver;
@@ -14,8 +14,7 @@ pub fn display(points: &[Point], incoming_lines: Receiver<Option<[i32; 4]>>) {
         return;
     }
 
-    // Create an SDL window.
-    let window = Window::new(
+    let window = Sdl2Window::new(
         OpenGL::_2_1,
         WindowSettings {
             title: "Colinear points".to_string(),
