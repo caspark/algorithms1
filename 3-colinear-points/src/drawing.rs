@@ -9,7 +9,7 @@ use std::iter::IteratorExt;
 use std::sync::mpsc::Receiver;
 use std::cmp;
 
-pub fn display(points: &[Point], incoming_lines: Receiver<(i32, i32, i32, i32)>) {
+pub fn display(points: &[Point], incoming_lines: Receiver<[i32; 4]>) {
     if points.len() == 0 {
         return;
     }
@@ -34,7 +34,7 @@ pub fn display(points: &[Point], incoming_lines: Receiver<(i32, i32, i32, i32)>)
     println!("bounds = {:?}", bounds);
 
     let gl = &mut Gl::new(OpenGL::_2_1);
-    let mut lines = Vec::<(i32,i32,i32,i32)>::new();
+    let mut lines = Vec::new();
 
     for e in events(&window) {
         if let Some(args) = e.render_args() {
@@ -52,12 +52,8 @@ pub fn display(points: &[Point], incoming_lines: Receiver<(i32, i32, i32, i32)>)
                             .trans(-min_x, -min_y);
 
             let red_line = Line::new([1.0, 0.0, 0.0, 1.0], 500f64 * cmp::partial_max(scale_x, scale_y).unwrap_or(scale_x));
-            for &(x1, y1, x2, y2) in &lines {
-                let p1 = x1 as f64;
-                let p2 = y1 as f64;
-                let p3 = x2 as f64;
-                let p4 = y2 as f64;
-                red_line.draw([p1, p2, p3, p4], context, gl);
+            for line in &lines {
+                red_line.draw(*line, context, gl);
             }
 
             let dot_sx = 3f64 / scale_x;
@@ -76,9 +72,9 @@ pub fn display(points: &[Point], incoming_lines: Receiver<(i32, i32, i32, i32)>)
         }
 
         if let Some(_) = e.update_args() {
-            while incoming_lines.try_recv().map(|(x1, y1, x2, y2)| {
-                println!("Received line {:?}", (x1, y1, x2, y2));
-                lines.push((x1, y1, x2, y2))
+            while incoming_lines.try_recv().map(|[x1, y1, x2, y2]| {
+                // println!("Received line {:?}", [x1, y1, x2, y2]);
+                lines.push([x1 as f64, y1 as f64, x2 as f64, y2 as f64]);
             }).is_ok() {
                 // loop
             }
