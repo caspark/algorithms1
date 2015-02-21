@@ -30,7 +30,7 @@ pub fn display(points: &[Point], incoming_lines: Receiver<Option<[i32; 4]>>) {
         points.iter().map(|p| p.x).min().unwrap(), points.iter().map(|p| p.x).max().unwrap(),
         points.iter().map(|p| p.y).min().unwrap(), points.iter().map(|p| p.y).max().unwrap()
     ];
-    println!("bounds = {:?}", bounds);
+    // println!("bounds = {:?}", bounds);
 
     let gl = &mut Gl::new(OpenGL::_2_1);
     let mut lines = Vec::new();
