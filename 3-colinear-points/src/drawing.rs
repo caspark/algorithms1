@@ -54,7 +54,7 @@ pub fn display(points: &[Point], incoming_lines: Receiver<Option<[i32; 4]>>) {
                             .flip_v()
                             .trans(-min_x, -min_y - max_y); // also do "- max_y" because we flip_v'd earlier
 
-            let red_line = Line::new([1.0, 0.0, 0.0, 1.0], 500f64 * cmp::partial_max(scale_x, scale_y).unwrap_or(scale_x));
+            let red_line = Line::new([1.0, 0.0, 0.0, 1.0], 1f64 / cmp::partial_min(scale_x, scale_y).unwrap_or(scale_x));
             for line in &lines {
                 red_line.draw(*line, context, gl);
             }
