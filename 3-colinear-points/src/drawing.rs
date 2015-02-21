@@ -74,11 +74,12 @@ pub fn display(points: &[Point], incoming_lines: Receiver<Option<[i32; 4]>>) {
         }
 
         if let Some(_) = e.update_args() {
-            while incoming_lines.try_recv().map(|maybe_line| match maybe_line {
-                Some([x1, y1, x2, y2]) => lines.push([x1 as f64, y1 as f64, x2 as f64, y2 as f64]),
-                None => complete = true,
-            }).is_ok() {
-                // loop
+            loop {
+                match incoming_lines.try_recv() {
+                    Ok(Some([x1, y1, x2, y2])) => lines.push([x1 as f64, y1 as f64, x2 as f64, y2 as f64]),
+                    Ok(None) => complete = true, // line finder is done
+                    Err(_) => break, // no new lines at this time
+                };
             }
         }
     }
