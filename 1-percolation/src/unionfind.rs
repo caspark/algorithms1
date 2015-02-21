@@ -158,13 +158,12 @@ mod tests {
             for nodes in expected_groups.iter() {
                 let mut shuffled_nodes = nodes.clone();
                 rng.shuffle(shuffled_nodes.as_mut_slice());
-                for window in shuffled_nodes[].windows(2) {
-                    // wtf, there has to be a better way to convert a vector of 2 elements into a tuple :(
-                    let window_nodes = window.iter().map(|&a| a).collect::<Vec<u32>>();
-                    match &window_nodes[] {
-                        [p, q] => unions.push((p, q)),
-                        _ => unreachable!()
-                    }
+                for window in shuffled_nodes.windows(2) {
+                    let mut iter = window.iter();
+                    unions.push(
+                        (*iter.next().expect("Window should have 2 items but was missing first"),
+                        *iter.next().expect("Window should have 2 items but was missing second"))
+                    );
                 }
             }
             rng.shuffle(unions.as_mut_slice());

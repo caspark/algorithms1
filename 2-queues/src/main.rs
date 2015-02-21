@@ -1,6 +1,6 @@
 #![feature(collections)] // for Vec.push_all()
 #![feature(env)]
-#![feature(io)]
+#![feature(old_io)]
 
 extern crate rand;
 
@@ -36,7 +36,7 @@ fn main() {
             }
             for _ in 0 .. k {
                 let e = randomq.dequeue().expect("k must be <= number of strings provided to stdin");
-                let e_as_str = str::from_utf8(&e[]).unwrap();
+                let e_as_str = str::from_utf8(&e).unwrap();
                 println!("{}", e_as_str.trim());
             }
         },

@@ -2,7 +2,6 @@
 #![feature(env)] // this was recently added so tell rust to be quiet about it
 #![feature(collections)] // so we can get the tail of a vector
 #![feature(test)] // so we can run benchmarks
-#![feature(std_misc)] // so we can spawn threads
 
 extern crate getopts;
 #[cfg(test)]

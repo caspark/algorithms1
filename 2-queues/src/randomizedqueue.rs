@@ -27,7 +27,7 @@ impl <E: Clone> RandomQueue<E> {
         if self.vec.len() == self.vec.capacity() {
             // unnecessary resize time!
             let mut new_vec = Vec::with_capacity(self.vec.capacity() * 2);
-            new_vec.push_all(&self.vec[]);
+            new_vec.push_all(&self.vec);
             self.vec = new_vec;
         }
         self.vec.push(item);
@@ -40,7 +40,7 @@ impl <E: Clone> RandomQueue<E> {
         if self.vec.len() == self.vec.capacity() / 4 {
             // unnecessary resize time!
             let mut new_vec = Vec::with_capacity(self.vec.capacity() / 2);
-            new_vec.push_all(&self.vec[]);
+            new_vec.push_all(&self.vec);
             self.vec = new_vec;
         }
         let curr_len = self.vec.len();

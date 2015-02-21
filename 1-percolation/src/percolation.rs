@@ -89,7 +89,7 @@ pub fn simulate_multiple(n: usize, times: usize, jobs: u32) -> PercolationStats 
         results: if jobs == 1 {
             (0..times).map(|_| simulate(n)).collect()
         } else {
-            use std::thread::Thread;
+            use std::thread;
             use std::sync::{Arc, Mutex, mpsc};
             use std::cmp;
 
@@ -100,7 +100,7 @@ pub fn simulate_multiple(n: usize, times: usize, jobs: u32) -> PercolationStats 
             for _ in 0 .. cmp::min(jobs.as_usize(), times) {
                 let tx = tx.clone();
                 let sims_left = sims_left.clone();
-                Thread::spawn(move|| {
+                thread::spawn(move|| {
                     // acquire lock, fail if another task has failed, try to pop an item, and only continue if we got something
                     while sims_left.lock().unwrap().pop().is_some() {
                         tx.send(simulate(n)).unwrap();
@@ -133,7 +133,7 @@ mod tests {
 
     #[test]
     fn percolation_all_open_at_start() {
-        let n = 10us;
+        let n = 10usize;
 
         let perc = Percolation::new(n);
         for i in 1 .. n {
@@ -145,7 +145,7 @@ mod tests {
 
     #[test]
     fn percolation_opening_works_properly() {
-        let mut perc = Percolation::new(10us);
+        let mut perc = Percolation::new(10usize);
 
         perc.open(1, 1);
         assert!(perc.is_open(1, 1));
@@ -153,8 +153,8 @@ mod tests {
         perc.open(10, 10);
         assert!(perc.is_open(10, 10));
 
-        for i in 2 .. 9us {
-            for j in 2 .. 9us {
+        for i in 2 .. 9usize {
+            for j in 2 .. 9usize {
                 assert!(!perc.is_open(i, j));
             }
         }
@@ -163,12 +163,12 @@ mod tests {
     #[test]
     #[should_fail(expected = "Out of bounds: (9, 0)")]
     fn percolation_is_open_for_out_of_bounds_should_fail() {
-        Percolation::new(10us).is_open(9, 0);
+        Percolation::new(10usize).is_open(9, 0);
     }
 
     #[test]
     #[should_fail(expected = "Out of bounds: (0, 5)")]
     fn percolation_opening_out_of_bounds_should_fail() {
-        Percolation::new(10us).open(0, 5);
+        Percolation::new(10usize).open(0, 5);
     }
 }
