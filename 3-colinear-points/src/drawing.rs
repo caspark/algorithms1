@@ -39,7 +39,7 @@ pub fn display(points: &[Point], incoming_lines: Receiver<Option<[i32; 4]>>) {
 
     for e in events(&window) {
         if let Some(args) = e.render_args() {
-            graphics::clear(if complete { [0.0, 0.0, 0.0, 1.0] } else { [0.1, 0.1, 0.1, 1.0] }, gl);
+            graphics::clear(if complete { [0.0, 0.0, 0.0, 1.0] } else { [0.5, 0.5, 0.5, 1.0] }, gl);
 
             let min_x = bounds[0] as f64;
             let max_x = bounds[1] as f64;
