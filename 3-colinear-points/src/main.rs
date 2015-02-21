@@ -59,7 +59,7 @@ fn main() {
         let points_for_finding_lines = points.clone();
         thread::spawn(move || {
             line_finder(&points_for_finding_lines[..], &tx);
-            tx.send(None); // let display know we're done
+            tx.send(None).unwrap(); // let display know we're done
             println!("Done finding lines.");
         });
 
