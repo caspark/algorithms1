@@ -2,15 +2,11 @@ use std::{cmp, f64};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Point {
-    x: i32,
-    y: i32,
+    pub x: i32,
+    pub y: i32,
 }
 
 impl Point {
-    pub fn new(x: i32, y: i32) -> Point {
-        Point{x: x, y: y}
-    }
-
     pub fn slope_to(&self, other: &Point) -> f64 {
         if self == other {
             f64::NEG_INFINITY

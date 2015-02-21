@@ -33,10 +33,7 @@ fn main() {
     let filename = &args[1];
     println!("Should now open {}", filename);
 
-    let points = parser::read_input_file(filename).unwrap().map_in_place(|(x, y)| Point::new(x, y));
-    for p in points {
-        println!("Point: {:?}", p);
-    }
-
-    drawing::display();
+    parser::read_input_file(filename).map(|coords|
+        drawing::display(&coords.map_in_place(|(x, y)| Point { x: x, y: y })[..])
+    );
 }
