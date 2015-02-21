@@ -19,8 +19,8 @@ impl Point {
         }
     }
 
-    pub fn cmp_by_relative_slope(&self, a: &Point, b: &Point) -> Option<cmp::Ordering> {
-        self.slope_to(a).partial_cmp(&self.slope_to(b))
+    pub fn cmp_by_relative_slope(&self, a: &Point, b: &Point) -> cmp::Ordering {
+        self.slope_to(a).partial_cmp(&self.slope_to(b)).expect("Slopes should have total ordering")
     }
 }
 
