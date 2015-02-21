@@ -50,6 +50,7 @@ pub fn display(points: &[Point], incoming_lines: Receiver<Option<[i32; 4]>>) {
 
             let context = &Context::abs(args.width as f64, args.height as f64)
                             .scale(scale_x, scale_y)
+                            //FIXME the flip and inclusion of -max_y seems to not work for small data sets
                             .flip_v()
                             .trans(-min_x, -min_y - max_y); // also do "- max_y" because we flip_v'd earlier
 
