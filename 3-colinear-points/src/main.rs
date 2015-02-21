@@ -37,7 +37,7 @@ fn main() {
     let filename = &args[1];
     println!("Input file is {}", filename);
 
-    let line_finder: fn(&[Point], Sender<[i32; 4]>) =
+    let line_finder: fn(&[Point], &Sender<Option<[i32; 4]>>) =
         if args[2] == "fast" {
             println!("Fast algorithm for finding co-linear points selected");
             colinearity::find_colinear_points_fast
@@ -58,7 +58,8 @@ fn main() {
         let (tx, rx) = channel();
         let points_for_finding_lines = points.clone();
         thread::spawn(move || {
-            line_finder(&points_for_finding_lines[..], tx);
+            line_finder(&points_for_finding_lines[..], &tx);
+            tx.send(None); // let display know we're done
             println!("Done finding lines.");
         });
 

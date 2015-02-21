@@ -9,7 +9,7 @@ use std::iter::IteratorExt;
 use std::sync::mpsc::Receiver;
 use std::cmp;
 
-pub fn display(points: &[Point], incoming_lines: Receiver<[i32; 4]>) {
+pub fn display(points: &[Point], incoming_lines: Receiver<Option<[i32; 4]>>) {
     if points.len() == 0 {
         return;
     }
@@ -35,10 +35,11 @@ pub fn display(points: &[Point], incoming_lines: Receiver<[i32; 4]>) {
 
     let gl = &mut Gl::new(OpenGL::_2_1);
     let mut lines = Vec::new();
+    let mut complete = false;
 
     for e in events(&window) {
         if let Some(args) = e.render_args() {
-            graphics::clear([0.0, 0.0, 0.0, 1.0], gl);
+            graphics::clear(if complete { [0.0, 0.0, 0.0, 1.0] } else { [0.1, 0.1, 0.1, 1.0] }, gl);
 
             let min_x = bounds[0] as f64;
             let max_x = bounds[1] as f64;
@@ -73,9 +74,9 @@ pub fn display(points: &[Point], incoming_lines: Receiver<[i32; 4]>) {
         }
 
         if let Some(_) = e.update_args() {
-            while incoming_lines.try_recv().map(|[x1, y1, x2, y2]| {
-                // println!("Received line {:?}", [x1, y1, x2, y2]);
-                lines.push([x1 as f64, y1 as f64, x2 as f64, y2 as f64]);
+            while incoming_lines.try_recv().map(|maybe_line| match maybe_line {
+                Some([x1, y1, x2, y2]) => lines.push([x1 as f64, y1 as f64, x2 as f64, y2 as f64]),
+                None => complete = true,
             }).is_ok() {
                 // loop
             }
