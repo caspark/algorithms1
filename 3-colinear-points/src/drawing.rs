@@ -1,57 +1,15 @@
-use graphics::{self, Context, rectangle, Rectangle, RelativeTransform};
+use graphics::{self, Context, Line, rectangle, Rectangle, RelativeTransform};
 use std::cell::RefCell;
 use opengl_graphics::{Gl, OpenGL};
 use piston::window::WindowSettings;
-use piston::event::{events, RenderArgs, RenderEvent, UpdateArgs, UpdateEvent};
+use piston::event::{events, RenderEvent, UpdateEvent};
 use sdl2_window::Sdl2Window as Window;
 use point::Point;
 use std::iter::IteratorExt;
+use std::sync::mpsc::Receiver;
+use std::cmp;
 
-struct App<'a> {
-    gl: Gl,       // OpenGL drawing backend.
-    points: &'a [Point],
-    bounds: [i32; 4], // min x, max x, min y, max y
-    rotation: f64 // Rotation for the square.
-}
-
-impl<'a> App<'a> {
-    fn render(&mut self, _: &mut Window, args: &RenderArgs) {
-        let gl = &mut self.gl;
-        graphics::clear([0.0, 0.0, 0.0, 1.0], gl);
-
-        let min_x = self.bounds[0] as f64;
-        let max_x = self.bounds[1] as f64;
-        let scale_x = args.width as f64 / (max_x - min_x);
-        let min_y = self.bounds[2] as f64;
-        let max_y = self.bounds[3] as f64;
-        let scale_y = args.height as f64 / (max_y - min_y);
-
-        let context = &Context::abs(args.width as f64, args.height as f64)
-                        .scale(scale_x, scale_y)
-                        .trans(-min_x, -min_y);
-
-        let dot_sx = 2f64 / scale_x;
-        let dot_sy = 2f64 / scale_y;
-
-        let blue_rect = Rectangle::new([0.0, 0.0, 1.0, 1.0]);
-        for point in self.points {
-            blue_rect.draw(rectangle::centered([point.x as f64, point.y as f64, dot_sx, dot_sy]), context, gl);
-        }
-
-        let green_rect = Rectangle::new([0.0, 1.0, 0.0, 1.0]);
-        green_rect.draw(rectangle::centered([min_x, min_y, dot_sx, dot_sy]), context, gl);
-        green_rect.draw(rectangle::centered([min_x, max_y, dot_sx, dot_sy]), context, gl);
-        green_rect.draw(rectangle::centered([max_x, min_y, dot_sx, dot_sy]), context, gl);
-        green_rect.draw(rectangle::centered([max_x, max_y, dot_sx, dot_sy]), context, gl);
-    }
-
-    fn update(&mut self, _: &mut Window, args: &UpdateArgs) {
-        // Rotate 2 radians per second.
-        self.rotation += 2.0 * args.dt;
-    }
-}
-
-pub fn display(points: &[Point]) {
+pub fn display(points: &[Point], incoming_lines: Receiver<(i32, i32, i32, i32)>) {
     if points.len() == 0 {
         return;
     }
@@ -61,7 +19,7 @@ pub fn display(points: &[Point]) {
         OpenGL::_2_1,
         WindowSettings {
             title: "Colinear points".to_string(),
-            size: [1024, 768],
+            size: [1280, 1024],
             samples: 0,
             fullscreen: false,
             exit_on_esc: true,
@@ -75,21 +33,55 @@ pub fn display(points: &[Point]) {
     ];
     println!("bounds = {:?}", bounds);
 
-    // Create a new game and run it.
-    let mut app = App {
-        gl: Gl::new(OpenGL::_2_1),
-        points: points,
-        bounds: bounds,
-        rotation: 0.0
-    };
+    let gl = &mut Gl::new(OpenGL::_2_1);
+    let mut lines = Vec::<(i32,i32,i32,i32)>::new();
 
     for e in events(&window) {
-        if let Some(r) = e.render_args() {
-            app.render(&mut window.borrow_mut(), &r);
+        if let Some(args) = e.render_args() {
+            graphics::clear([0.0, 0.0, 0.0, 1.0], gl);
+
+            let min_x = bounds[0] as f64;
+            let max_x = bounds[1] as f64;
+            let scale_x = args.width as f64 / (max_x - min_x);
+            let min_y = bounds[2] as f64;
+            let max_y = bounds[3] as f64;
+            let scale_y = args.height as f64 / (max_y - min_y);
+
+            let context = &Context::abs(args.width as f64, args.height as f64)
+                            .scale(scale_x, scale_y)
+                            .trans(-min_x, -min_y);
+
+            let red_line = Line::new([1.0, 0.0, 0.0, 1.0], 500f64 * cmp::partial_max(scale_x, scale_y).unwrap_or(scale_x));
+            for &(x1, y1, x2, y2) in &lines {
+                let p1 = x1 as f64;
+                let p2 = y1 as f64;
+                let p3 = x2 as f64;
+                let p4 = y2 as f64;
+                red_line.draw([p1, p2, p3, p4], context, gl);
+            }
+
+            let dot_sx = 3f64 / scale_x;
+            let dot_sy = 3f64 / scale_y;
+
+            let blue_rect = Rectangle::new([0.0, 0.0, 1.0, 1.0]);
+            for point in points {
+                blue_rect.draw(rectangle::centered([point.x as f64, point.y as f64, dot_sx, dot_sy]), context, gl);
+            }
+
+            let green_rect = Rectangle::new([0.0, 1.0, 0.0, 1.0]);
+            green_rect.draw(rectangle::centered([min_x, min_y, dot_sx, dot_sy]), context, gl);
+            green_rect.draw(rectangle::centered([min_x, max_y, dot_sx, dot_sy]), context, gl);
+            green_rect.draw(rectangle::centered([max_x, min_y, dot_sx, dot_sy]), context, gl);
+            green_rect.draw(rectangle::centered([max_x, max_y, dot_sx, dot_sy]), context, gl);
         }
 
-        if let Some(u) = e.update_args() {
-            app.update(&mut window.borrow_mut(), &u);
+        if let Some(_) = e.update_args() {
+            while incoming_lines.try_recv().map(|(x1, y1, x2, y2)| {
+                println!("Received line {:?}", (x1, y1, x2, y2));
+                lines.push((x1, y1, x2, y2))
+            }).is_ok() {
+                // loop
+            }
         }
     }
 }

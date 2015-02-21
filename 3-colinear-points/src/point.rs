@@ -1,6 +1,6 @@
 use std::{cmp, f64};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Point {
     pub x: i32,
     pub y: i32,
