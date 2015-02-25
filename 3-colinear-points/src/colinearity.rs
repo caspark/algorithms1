@@ -1,5 +1,6 @@
 use point::Point;
 use std::sync::mpsc::Sender;
+use std::iter::IteratorExt;
 
 pub fn find_all_lines(points: &[Point], line_sender: &Sender<Option<[i32; 4]>>) {
     for p1 in points {
@@ -66,7 +67,7 @@ pub fn find_colinear_points_fast(points: &[Point], line_sender: &Sender<Option<[
             }
             handle_possible_line(&origin, first, last, &sortable_points, line_sender);
 
-            first += 1;
+            first = last;
         }
     }
 
@@ -81,12 +82,12 @@ pub fn find_colinear_points_fast(points: &[Point], line_sender: &Sender<Option<[
             for ref p in &sortable_points[first..last] {
                 v.push(p);
             }
-            v.sort();
-            if v[0] != origin {
+            let min = *v.iter().min().unwrap();
+            let max = *v.iter().max().unwrap();
+            if min != origin {
                 return; // avoid reporting the same line more than once
             }
-            let last = v.len() - 1;
-            [v[0].x, v[0].y, v[last].x, v[last].y]
+            [min.x, min.y, max.x, max.y]
         };
         // println!("Sending line {:?}", line);
         line_sender.send(Some(line)).unwrap();
