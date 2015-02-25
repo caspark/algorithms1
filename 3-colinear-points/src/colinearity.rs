@@ -1,6 +1,6 @@
 use point::Point;
 use std::sync::mpsc::Sender;
-use std::iter::IteratorExt;
+use std::cmp;
 
 pub fn find_all_lines(points: &[Point], line_sender: &Sender<Option<[i32; 4]>>) {
     for p1 in points {
@@ -62,34 +62,26 @@ pub fn find_colinear_points_fast(points: &[Point], line_sender: &Sender<Option<[
 
             let slope_to_first = origin.slope_to(&sortable_points[first]);
             let mut last = first + 1;
+            let mut min = origin;
+            let mut max = origin;
             while last != sortable_points.len() && slope_to_first == origin.slope_to(&sortable_points[last]) {
+                if sortable_points[last].cmp(min) == cmp::Ordering::Less {
+                    min = &sortable_points[last];
+                }
+                if sortable_points[last].cmp(max) == cmp::Ordering::Greater {
+                    max = &sortable_points[last];
+                }
+
                 last += 1;
             }
-            handle_possible_line(&origin, first, last, &sortable_points, line_sender);
+            if last - first >= 3 // want at least 4 (including origin) points on a line segment
+                    && min == origin { // avoid reporting the same line more than once
+                let line = [min.x, min.y, max.x, max.y];
+                // println!("Sending line {:?}", line);
+                line_sender.send(Some(line)).unwrap();
+            }
 
             first = last;
         }
-    }
-
-    fn handle_possible_line(origin: &Point, first: usize, last: usize, sortable_points: &[Point], line_sender: &Sender<Option<[i32; 4]>>) {
-        if last - first < 3 {
-            return; // want at least 4 (including origin) points on a line segment
-        }
-
-        let line = {
-            let mut v = Vec::with_capacity(last - first + 1);
-            v.push(origin);
-            for ref p in &sortable_points[first..last] {
-                v.push(p);
-            }
-            let min = *v.iter().min().unwrap();
-            let max = *v.iter().max().unwrap();
-            if min != origin {
-                return; // avoid reporting the same line more than once
-            }
-            [min.x, min.y, max.x, max.y]
-        };
-        // println!("Sending line {:?}", line);
-        line_sender.send(Some(line)).unwrap();
     }
 }
