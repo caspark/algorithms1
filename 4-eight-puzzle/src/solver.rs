@@ -5,14 +5,20 @@ use std::rc::{self, Rc};
 
 #[derive(Debug)]
 struct BoardState {
-    prev: Option<Rc<BoardState>>,
-    depth: i64, // number of parents
+    parent: Option<Rc<BoardState>>,
+    depth: u32, // number of parent nodes
+    priority: i64, // cached priority to determine ordering: depth + score of board
     board: Board,
 }
 
 impl BoardState {
-    fn priority(&self) -> i64 {
-        self.board.manhattan() + self.depth
+    fn new(parent: Option<Rc<BoardState>>, current_depth: u32, board: Board) -> BoardState {
+        BoardState {
+            parent: parent,
+            depth: current_depth,
+            priority: current_depth as i64 + board.manhattan(),
+            board: board,
+        }
     }
 }
 
@@ -24,8 +30,8 @@ impl PartialOrd for BoardState {
 
 impl Ord for BoardState {
     fn cmp(&self, other: &Self) -> Ordering {
-        // compare other to self to reverse the order for the max-heap instead of a min-heap
-        other.priority().cmp(&self.priority())
+        // compare other to self to reverse the order to use BinaryHeap as a min-heap instead of a max-heap
+        other.priority.cmp(&self.priority)
     }
 }
 
@@ -40,31 +46,23 @@ impl Eq for BoardState {}
 pub fn solve(board: &Board) -> Option<Vec<Board>> {
     let mut pq = BinaryHeap::new();
     let mut pq_twin = BinaryHeap::new();
-    let mut state = Rc::new(BoardState { prev: None, depth: 0, board: board.clone() });
-    let mut state_twin = Rc::new(BoardState { prev: None, depth: 0, board: board.twin() });
+    let mut state = Rc::new(BoardState::new(None, 0, board.clone()));
+    let mut state_twin = Rc::new(BoardState::new(None, 0, board.twin()));
     while !state.board.is_goal() && !state_twin.board.is_goal() {
         // println!("Current state is {:?}", state.board);
         for neighbour in state.board.neighbours() {
-            if state.prev.is_none() || state.prev.as_ref().unwrap().board != neighbour {
-                pq.push(BoardState {
-                    prev: Some(state.clone()),
-                    depth: state.depth + 1,
-                    board: neighbour,
-                });
+            if state.parent.is_none() || state.parent.as_ref().unwrap().board != neighbour {
+                pq.push(BoardState::new(Some(state.clone()), state.depth + 1, neighbour));
             }
         }
         for neighbour in state_twin.board.neighbours() {
-            if state_twin.prev.is_none() || state_twin.prev.as_ref().unwrap().board != neighbour {
-                pq_twin.push(BoardState {
-                    prev: Some(state_twin.clone()),
-                    depth: state_twin.depth + 1,
-                    board: neighbour,
-                });
+            if state_twin.parent.is_none() || state_twin.parent.as_ref().unwrap().board != neighbour {
+                pq_twin.push(BoardState::new(Some(state_twin.clone()), state_twin.depth + 1, neighbour));
             }
         }
 
         //FIXME distance measures sometimes both increase & decrease
-        // println!("Board: {:?} Twin: {:?}", state.board.manhattan() + state.depth, state_twin.board.manhattan() + state_twin.depth);
+        // println!("Board: {:?} Twin: {:?}", state.priority, state_twin.priority);
 
         state = Rc::new(pq.pop().expect("Ran out of moves; looks like the board is unsolveable"));
         state_twin = Rc::new(pq_twin.pop().expect("Ran out of moves; looks like the board is unsolveable"));
@@ -73,10 +71,10 @@ pub fn solve(board: &Board) -> Option<Vec<Board>> {
     if state_twin.board.is_goal() {
         None
     } else {
-        let mut solution = Vec::with_capacity(50); // 50 = stab in the dark at average path length
-        while state.prev.is_some() {
+        let mut solution = Vec::with_capacity(state.depth as usize + 1 as usize);
+        while state.parent.is_some() {
             solution.push(state.board.clone());
-            state = rc::try_unwrap(state).ok().unwrap().prev.unwrap();
+            state = rc::try_unwrap(state).ok().unwrap().parent.unwrap();
         }
         solution.push(state.board.clone());
         solution.reverse();
