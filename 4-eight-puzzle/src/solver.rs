@@ -113,7 +113,19 @@ mod tests {
     }
 
     #[test]
-    fn solve_finishes_for_random_board_of_size_2() { //FIXME this test sometimes never terminates
-        solve(&Board::random(2));
+    fn try_to_solve_known_problem() {
+        //FIXME solving some boards doesn't work (program runs forever)
+        // known problem cases: [0, 1, 2, 3], [0, 3, 1, 2], [0, 2, 3, 1]
+        let b = Board::new(vec![0, 1, 2, 3]);
+        println!("Trying to solve: {:?}", b);
+        solve(&b);
     }
+
+    //FIXME commented out until known problem case above is solved
+    // #[test]
+    // fn solve_finishes_for_random_board_of_size_2() {
+    //     let random = Board::random(2);
+    //     println!("Trying to solve: {:?}", random);
+    //     solve(&random);
+    // }
 }
