@@ -1,3 +1,5 @@
+#![feature(core)]
+
 extern crate rand;
 
 mod board;
