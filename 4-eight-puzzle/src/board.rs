@@ -45,7 +45,7 @@ impl Board {
 
     fn is_goal(&self) -> bool {
         for (i, p) in self.board.iter().enumerate() {
-            if i < self.board.len() - 1 && *p != (i as u64) - 1 // all except end of board
+            if i < self.board.len() - 1 && *p != (i as u64) + 1 // all except end of board
                     || i == self.board.len() - 1 && *p != 0 { // end of board
                 return false;
             }
@@ -67,7 +67,10 @@ mod tests {
 
     #[test]
     fn goal_testing_works_correctly() {
-        let b = Board::new(vec![1,2,3,0]);
-        assert!(b.is_goal());
+        assert!(Board::new(vec![1,2,3,0]).is_goal());
+        assert!(Board::new(vec![0]).is_goal());
+
+        assert!(!Board::new(vec![1, 3, 2, 0]).is_goal());
+        assert!(!Board::new(vec![0, 1, 2, 3]).is_goal());
     }
 }
