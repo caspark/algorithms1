@@ -1,3 +1,4 @@
+#![feature(alloc)]
 #![feature(core)]
 
 extern crate rand;
