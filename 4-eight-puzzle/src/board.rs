@@ -3,8 +3,8 @@ use std::num::SignedInt;
 use std::iter::IteratorExt;
 
 /// An 8 Puzzle board (or N puzzle board).
-#[derive(Debug, Eq, PartialEq)]
-struct Board {
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct Board {
     board: Vec<i64>
 }
 
