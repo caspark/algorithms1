@@ -29,33 +29,45 @@ impl PartialEq for BoardState {
 
 impl Eq for BoardState {}
 
-pub fn solve(board: &Board) -> Vec<Board> {
+pub fn solve(board: &Board) -> Option<Vec<Board>> {
     let mut pq = BinaryHeap::new();
+    let mut pq_twin = BinaryHeap::new();
     let mut state = Rc::new(BoardState { prev: None, board: board.clone() });
-    while !state.board.is_goal() {
+    let mut state_twin = Rc::new(BoardState { prev: None, board: board.twin() });
+    while !state.board.is_goal() && !state_twin.board.is_goal() {
         // println!("Current state is {:?}", state.board);
         for neighbour in state.board.neighbours() {
             if state.prev.is_none() || state.prev.as_ref().unwrap().board != neighbour {
-                let nbs = BoardState {
+                pq.push(BoardState {
                     prev: Some(state.clone()),
                     board: neighbour,
-                };
-                pq.push(nbs);
+                });
+            }
+        }
+        for neighbour in state_twin.board.neighbours() {
+            if state_twin.prev.is_none() || state_twin.prev.as_ref().unwrap().board != neighbour {
+                pq_twin.push(BoardState {
+                    prev: Some(state_twin.clone()),
+                    board: neighbour,
+                });
             }
         }
 
         state = Rc::new(pq.pop().expect("Ran out of moves; looks like the board is unsolveable"));
     }
 
-    let mut solution = Vec::with_capacity(50); // 50 = stab in the dark at average path length
-    while state.prev.is_some() {
+    if state_twin.board.is_goal() {
+        None
+    } else {
+        let mut solution = Vec::with_capacity(50); // 50 = stab in the dark at average path length
+        while state.prev.is_some() {
+            solution.push(state.board.clone());
+            state = rc::try_unwrap(state).ok().unwrap().prev.unwrap();
+        }
         solution.push(state.board.clone());
-        state = rc::try_unwrap(state).ok().unwrap().prev.unwrap();
+        solution.reverse();
+        Some(solution)
     }
-    solution.push(state.board.clone());
-    solution.reverse();
-
-    return solution;
 }
 
 
@@ -67,18 +79,24 @@ mod tests {
     #[test]
     fn solve_already_solved_board() {
         let b = Board::new(vec![1, 2, 3, 0]);
-        assert_eq!(solve(&b), vec![b.clone()]);
+        assert_eq!(solve(&b), Some(vec![b.clone()]));
     }
 
     #[test]
     fn solve_one_step_away_board() {
         let b = Board::new(vec![1, 2, 0, 3]);
-        assert_eq!(solve(&b), vec![b.clone(), Board::new(vec![1, 2, 3, 0])]);
+        assert_eq!(solve(&b), Some(vec![b.clone(), Board::new(vec![1, 2, 3, 0])]));
     }
 
     #[test]
     fn solve_several_steps_on_2_by_2_board() {
         let b = Board::new(vec![2, 0, 1, 3]);
-        assert!(solve(&b).len() == 4); // swap 0 with 2, swap 0 with 1, swap 0 with 3
+        assert!(solve(&b).unwrap().len() == 4); // swap 0 with 2, swap 0 with 1, swap 0 with 3
+    }
+
+    #[test]
+    fn solve_unsolvable() {
+        let b = Board::new(vec![2, 1, 3, 0]); // 1 and 2 are swapped
+        assert_eq!(solve(&b), None);
     }
 }

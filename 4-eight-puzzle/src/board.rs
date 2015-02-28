@@ -89,7 +89,7 @@ impl Board {
     }
 
     /// Return a new board with the blocks at the given coordinates swapped
-    fn swapped(&self, x1: i64, y1: i64, x2: i64, y2: i64) -> Board {
+    fn create_swapped(&self, x1: i64, y1: i64, x2: i64, y2: i64) -> Board {
         let dim = self.dimension() as i64;
         let pos1 = y1 * dim + x1;
         let pos2 = y2 * dim + x2;
@@ -107,18 +107,30 @@ impl Board {
 
         let mut vec = Vec::with_capacity(4);
         if x > 0 { // zero can move left
-            vec.push(self.swapped(x, y, x - 1, y));
+            vec.push(self.create_swapped(x, y, x - 1, y));
         }
         if x < dim - 1 { // zero can move right
-            vec.push(self.swapped(x, y, x + 1, y));
+            vec.push(self.create_swapped(x, y, x + 1, y));
         }
         if y > 0 { // zero can move up
-            vec.push(self.swapped(x, y, x, y - 1));
+            vec.push(self.create_swapped(x, y, x, y - 1));
         }
         if y < dim - 1 { // zero can move down
-            vec.push(self.swapped(x, y, x, y + 1));
+            vec.push(self.create_swapped(x, y, x, y + 1));
         }
         vec
+    }
+
+    pub fn twin(&self) -> Board {
+        let dim = self.dimension() as i64;
+        if dim < 2 {
+            panic!("Boards of less than dimension 2 have no twin");
+        }
+        if self.board[1] == 0 {
+            self.create_swapped(0, 0, 0, 1)
+        } else {
+            self.create_swapped(0, 0, 1, 0)
+        }
     }
 }
 
