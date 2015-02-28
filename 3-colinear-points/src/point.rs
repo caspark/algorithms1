@@ -60,50 +60,50 @@ mod tests {
 
     #[test]
     fn points_ordering_should_be_by_y_coord_then_by_x_coord() {
-        assert_eq!(Point::new(1, 1), Point::new(1, 1));
-        assert!(Point::new(1, 0) != Point::new(1, 1));
-        assert!(Point::new(0, 1) != Point::new(1, 1));
+        assert_eq!(Point { x: 1, y: 1 }, Point { x: 1, y: 1 });
+        assert!(Point { x: 1, y: 0 } != Point { x: 1, y: 1 });
+        assert!(Point { x: 0, y: 1 } != Point { x: 1, y: 1 });
 
         // y should be first priority for compares
-        assert!(Point::new(1, 0) < Point::new(1, 1));
-        assert!(Point::new(1, 0) < Point::new(0, 1));
-        assert!(Point::new(0, 1) > Point::new(1, 0));
+        assert!(Point { x: 1, y: 0 } < Point { x: 1, y: 1 });
+        assert!(Point { x: 1, y: 0 } < Point { x: 0, y: 1 });
+        assert!(Point { x: 0, y: 1 } > Point { x: 1, y: 0 });
 
         // x should be tie breaker
-        assert!(Point::new(1, 1) > Point::new(0, 1));
-        assert!(Point::new(0, 1) < Point::new(1, 1));
+        assert!(Point { x: 1, y: 1 } > Point { x: 0, y: 1 });
+        assert!(Point { x: 0, y: 1 } < Point { x: 1, y: 1 });
     }
 
     #[test]
     fn slopes_are_calculated_correctly() {
         // degenerate line segment
-        assert_eq!(Point::new(0, 0).slope_to(&Point::new(0, 0)), f64::NEG_INFINITY);
+        assert_eq!(Point { x: 0, y: 0 }.slope_to(&Point { x: 0, y: 0 }), f64::NEG_INFINITY);
 
         // horizontal line segment
-        assert_eq!(Point::new(0, 0).slope_to(&Point::new(1, 0)), 0f64);
-        assert_eq!(Point::new(1, 0).slope_to(&Point::new(0, 0)), 0f64);
+        assert_eq!(Point { x: 0, y: 0 }.slope_to(&Point { x: 1, y: 0 }), 0f64);
+        assert_eq!(Point { x: 1, y: 0 }.slope_to(&Point { x: 0, y: 0 }), 0f64);
 
         // vertical line segment
-        assert_eq!(Point::new(0, 0).slope_to(&Point::new(0, 1)), f64::INFINITY);
-        assert_eq!(Point::new(0, 1).slope_to(&Point::new(0, 0)), f64::INFINITY);
+        assert_eq!(Point { x: 0, y: 0 }.slope_to(&Point { x: 0, y: 1 }), f64::INFINITY);
+        assert_eq!(Point { x: 0, y: 1 }.slope_to(&Point { x: 0, y: 0 }), f64::INFINITY);
 
         // normal slopes
-        assert_eq!(Point::new(0, 0).slope_to(&Point::new(1, 1)), 1f64);
-        assert_eq!(Point::new(1, 1).slope_to(&Point::new(0, 0)), 1f64);
-        assert_eq!(Point::new(0, 0).slope_to(&Point::new(1, 2)), 2f64);
-        assert_eq!(Point::new(1, 2).slope_to(&Point::new(0, 0)), 2f64);
-        assert_eq!(Point::new(0, 0).slope_to(&Point::new(2, 1)), 0.5f64);
-        assert_eq!(Point::new(2, 1).slope_to(&Point::new(0, 0)), 0.5f64);
+        assert_eq!(Point { x: 0, y: 0 }.slope_to(&Point { x: 1, y: 1 }), 1f64);
+        assert_eq!(Point { x: 1, y: 1 }.slope_to(&Point { x: 0, y: 0 }), 1f64);
+        assert_eq!(Point { x: 0, y: 0 }.slope_to(&Point { x: 1, y: 2 }), 2f64);
+        assert_eq!(Point { x: 1, y: 2 }.slope_to(&Point { x: 0, y: 0 }), 2f64);
+        assert_eq!(Point { x: 0, y: 0 }.slope_to(&Point { x: 2, y: 1 }), 0.5f64);
+        assert_eq!(Point { x: 2, y: 1 }.slope_to(&Point { x: 0, y: 0 }), 0.5f64);
     }
 
     #[test]
     fn comparing_by_slope_considers_points_on_a_line_equal() {
-        let base = Point::new(1, 1);
+        let base = Point { x: 1, y: 1 };
 
-        assert_eq!(base.cmp_by_relative_slope(&Point::new(2, 1), &Point::new(2, 2)).unwrap(), Ordering::Less);
-        assert_eq!(base.cmp_by_relative_slope(&Point::new(2, 2), &Point::new(2, 1)).unwrap(), Ordering::Greater);
+        assert_eq!(base.cmp_by_relative_slope(&Point { x: 2, y: 1 }, &Point { x: 2, y: 2 }), Ordering::Less);
+        assert_eq!(base.cmp_by_relative_slope(&Point { x: 2, y: 2 }, &Point { x: 2, y: 1 }), Ordering::Greater);
 
-        assert_eq!(base.cmp_by_relative_slope(&Point::new(2, 2), &Point::new(3, 3)).unwrap(), Ordering::Equal);
-        assert_eq!(base.cmp_by_relative_slope(&Point::new(3, 3), &Point::new(2, 2)).unwrap(), Ordering::Equal);
+        assert_eq!(base.cmp_by_relative_slope(&Point { x: 2, y: 2 }, &Point { x: 3, y: 3 }), Ordering::Equal);
+        assert_eq!(base.cmp_by_relative_slope(&Point { x: 3, y: 3 }, &Point { x: 2, y: 2 }), Ordering::Equal);
     }
 }
