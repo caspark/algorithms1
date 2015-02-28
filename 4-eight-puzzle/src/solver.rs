@@ -53,7 +53,11 @@ pub fn solve(board: &Board) -> Option<Vec<Board>> {
             }
         }
 
+        //FIXME distance measures sometimes increase/decrease
+        println!("Board: {:?} Twin: {:?}", state.board.manhattan(), state_twin.board.manhattan());
+
         state = Rc::new(pq.pop().expect("Ran out of moves; looks like the board is unsolveable"));
+        state_twin = Rc::new(pq_twin.pop().expect("Ran out of moves; looks like the board is unsolveable"));
     }
 
     if state_twin.board.is_goal() {
@@ -98,5 +102,10 @@ mod tests {
     fn solve_unsolvable() {
         let b = Board::new(vec![2, 1, 3, 0]); // 1 and 2 are swapped
         assert_eq!(solve(&b), None);
+    }
+
+    #[test]
+    fn solve_finishes_for_random_board_of_size_2() { //FIXME this test sometimes never terminates
+        solve(&Board::random(2));
     }
 }
