@@ -20,7 +20,7 @@ impl Board {
         }
 
         let mut copy_to_sort = board.clone();
-        &mut copy_to_sort[..].sort();
+        copy_to_sort[..].sort();
         for (i, b) in copy_to_sort.iter().enumerate() {
             if i as i64 != *b {
                 panic!("Missing expected number {} in board!", i);
