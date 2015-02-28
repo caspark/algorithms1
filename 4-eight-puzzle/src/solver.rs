@@ -6,7 +6,14 @@ use std::rc::{self, Rc};
 #[derive(Debug)]
 struct BoardState {
     prev: Option<Rc<BoardState>>,
+    depth: i64, // number of parents
     board: Board,
+}
+
+impl BoardState {
+    fn priority(&self) -> i64 {
+        self.board.manhattan() + self.depth
+    }
 }
 
 impl PartialOrd for BoardState {
@@ -17,7 +24,8 @@ impl PartialOrd for BoardState {
 
 impl Ord for BoardState {
     fn cmp(&self, other: &Self) -> Ordering {
-        other.board.manhattan().cmp(&self.board.manhattan()) // compare other to self to reverse the order for the max-heap instead of a min-heap
+        // compare other to self to reverse the order for the max-heap instead of a min-heap
+        other.priority().cmp(&self.priority())
     }
 }
 
@@ -32,14 +40,15 @@ impl Eq for BoardState {}
 pub fn solve(board: &Board) -> Option<Vec<Board>> {
     let mut pq = BinaryHeap::new();
     let mut pq_twin = BinaryHeap::new();
-    let mut state = Rc::new(BoardState { prev: None, board: board.clone() });
-    let mut state_twin = Rc::new(BoardState { prev: None, board: board.twin() });
+    let mut state = Rc::new(BoardState { prev: None, depth: 0, board: board.clone() });
+    let mut state_twin = Rc::new(BoardState { prev: None, depth: 0, board: board.twin() });
     while !state.board.is_goal() && !state_twin.board.is_goal() {
         // println!("Current state is {:?}", state.board);
         for neighbour in state.board.neighbours() {
             if state.prev.is_none() || state.prev.as_ref().unwrap().board != neighbour {
                 pq.push(BoardState {
                     prev: Some(state.clone()),
+                    depth: state.depth + 1,
                     board: neighbour,
                 });
             }
@@ -48,13 +57,14 @@ pub fn solve(board: &Board) -> Option<Vec<Board>> {
             if state_twin.prev.is_none() || state_twin.prev.as_ref().unwrap().board != neighbour {
                 pq_twin.push(BoardState {
                     prev: Some(state_twin.clone()),
+                    depth: state_twin.depth + 1,
                     board: neighbour,
                 });
             }
         }
 
-        //FIXME distance measures sometimes increase/decrease
-        println!("Board: {:?} Twin: {:?}", state.board.manhattan(), state_twin.board.manhattan());
+        //FIXME distance measures sometimes both increase & decrease
+        // println!("Board: {:?} Twin: {:?}", state.board.manhattan() + state.depth, state_twin.board.manhattan() + state_twin.depth);
 
         state = Rc::new(pq.pop().expect("Ran out of moves; looks like the board is unsolveable"));
         state_twin = Rc::new(pq_twin.pop().expect("Ran out of moves; looks like the board is unsolveable"));
