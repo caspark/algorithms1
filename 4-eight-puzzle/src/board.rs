@@ -1,5 +1,6 @@
 use std::num::Int;
 use std::num::SignedInt;
+use std::iter::IteratorExt;
 
 /// An 8 Puzzle board (or N puzzle board).
 #[derive(Debug, Eq, PartialEq)]
@@ -44,7 +45,7 @@ impl Board {
         usize_square_root(self.board.len())
     }
 
-    fn is_goal(&self) -> bool {
+    pub fn is_goal(&self) -> bool {
         for (i, b) in self.board.iter().enumerate() {
             if i < self.board.len() - 1 && *b != (i as i64) + 1 // all except end of board
                     || i == self.board.len() - 1 && *b != 0 { // end of board
@@ -55,7 +56,7 @@ impl Board {
     }
 
     /// Returns the hamming distance to the goal board
-    fn hamming(&self) -> i64 {
+    pub fn hamming(&self) -> i64 {
         let mut dist = 0;
         for (i, b) in self.board.iter().enumerate() {
             if *b != (i as i64) + 1 && *b != 0 {
@@ -66,7 +67,7 @@ impl Board {
     }
 
     /// Returns the manhattan distance to the goal board
-    fn manhattan(&self) -> i64 {
+    pub fn manhattan(&self) -> i64 {
         let dim = self.dimension() as i64; // unsafe but we assume our boards aren't going to get too big
         let mut dist = 0;
         for (i, b) in self.board.iter().enumerate() {
@@ -85,6 +86,39 @@ impl Board {
             }
         }
         dist
+    }
+
+    /// Return a new board with the blocks at the given coordinates swapped
+    fn swapped(&self, x1: i64, y1: i64, x2: i64, y2: i64) -> Board {
+        let dim = self.dimension() as i64;
+        let pos1 = y1 * dim + x1;
+        let pos2 = y2 * dim + x2;
+        let mut swapped_board = self.board.clone();
+        swapped_board.swap(pos1 as usize, pos2 as usize);
+        Board { board: swapped_board }
+    }
+
+    /// Return each board that can be made by swapping the zero with an adjacent block
+    pub fn neighbours(&self) -> Vec<Board> {
+        let dim = self.dimension() as i64;
+        let zero_pos = self.board.iter().position(|b| *b == 0).unwrap() as i64;
+        let x = zero_pos % dim;
+        let y = zero_pos / dim;
+
+        let mut vec = Vec::with_capacity(4);
+        if x > 0 { // zero can move left
+            vec.push(self.swapped(x, y, x - 1, y));
+        }
+        if x < dim - 1 { // zero can move right
+            vec.push(self.swapped(x, y, x + 1, y));
+        }
+        if y > 0 { // zero can move up
+            vec.push(self.swapped(x, y, x, y - 1));
+        }
+        if y < dim - 1 { // zero can move down
+            vec.push(self.swapped(x, y, x, y + 1));
+        }
+        vec
     }
 }
 
@@ -146,5 +180,69 @@ mod tests {
             vec![8, 1, 3,
                  4, 0, 2,
                  7, 6, 5]).manhattan(), 10);
+    }
+
+    #[test]
+    fn neighbours() {
+        assert_eq!(Board::new(vec![
+                0, 1,
+                2, 3
+            ]).neighbours(),
+            vec![ // zero should move right and down
+                Board::new(vec![
+                    1, 0,
+                    2, 3
+                ]),
+                Board::new(vec![
+                    2, 1,
+                    0, 3
+                ])
+            ]
+        );
+
+        assert_eq!(Board::new(vec![
+                1, 2,
+                3, 0
+            ]).neighbours(),
+            vec![ // zero should move left and up
+                Board::new(vec![
+                    1, 2,
+                    0, 3
+                ]),
+                Board::new(vec![
+                    1, 0,
+                    3, 2
+                ])
+            ]
+        ); // all numbers in wrong position (note that 2 needs to move twice)
+
+        assert_eq!(Board::new(vec![
+                1, 2, 3,
+                4, 0, 5,
+                6, 7, 8
+            ]).neighbours(),
+            vec![ // zero should move in all four directions
+                Board::new(vec![
+                    1, 2, 3,
+                    0, 4, 5,
+                    6, 7, 8
+                ]),
+                Board::new(vec![
+                    1, 2, 3,
+                    4, 5, 0,
+                    6, 7, 8
+                ]),
+                Board::new(vec![
+                    1, 0, 3,
+                    4, 2, 5,
+                    6, 7, 8
+                ]),
+                Board::new(vec![
+                    1, 2, 3,
+                    4, 7, 5,
+                    6, 0, 8
+                ])
+            ]
+        ); // all numbers in wrong position (note that 2 needs to move twice)
     }
 }
