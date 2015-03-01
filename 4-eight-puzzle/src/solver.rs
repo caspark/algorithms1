@@ -1,7 +1,7 @@
 use board::Board;
 use std::collections::BinaryHeap;
 use std::cmp::{Eq, PartialEq, Ord, Ordering};
-use std::rc::{self, Rc};
+use std::rc::Rc;
 
 #[derive(Debug)]
 struct BoardState {
@@ -46,35 +46,36 @@ impl Eq for BoardState {}
 pub fn solve(board: &Board) -> Option<Vec<Board>> {
     let mut a_pq = BinaryHeap::new();
     let mut b_pq = BinaryHeap::new();
-    let mut a_state = Rc::new(BoardState::new(None, 0, board.clone()));
-    let mut b_state = Rc::new(BoardState::new(None, 0, board.twin()));
+    let mut a_state_rc = Rc::new(BoardState::new(None, 0, board.clone()));
+    let mut b_state_rc = Rc::new(BoardState::new(None, 0, board.twin()));
 
-    while !a_state.board.is_goal() && !b_state.board.is_goal() {
-        // println!("Current a_state is {:?}", a_state.board);
-        for neighbour in a_state.board.neighbours() {
-            if a_state.parent.is_none() || a_state.parent.as_ref().unwrap().board != neighbour {
-                a_pq.push(BoardState::new(Some(a_state.clone()), a_state.depth + 1, neighbour));
+    while !a_state_rc.board.is_goal() && !b_state_rc.board.is_goal() {
+        // println!("Current a_state_rc is {:?}", a_state_rc.board);
+        for neighbour in a_state_rc.board.neighbours() {
+            if a_state_rc.parent.is_none() || a_state_rc.parent.as_ref().unwrap().board != neighbour {
+                a_pq.push(BoardState::new(Some(a_state_rc.clone()), a_state_rc.depth + 1, neighbour));
             }
         }
-        for neighbour in b_state.board.neighbours() {
-            if b_state.parent.is_none() || b_state.parent.as_ref().unwrap().board != neighbour {
-                b_pq.push(BoardState::new(Some(b_state.clone()), b_state.depth + 1, neighbour));
+        for neighbour in b_state_rc.board.neighbours() {
+            if b_state_rc.parent.is_none() || b_state_rc.parent.as_ref().unwrap().board != neighbour {
+                b_pq.push(BoardState::new(Some(b_state_rc.clone()), b_state_rc.depth + 1, neighbour));
             }
         }
 
-        a_state = Rc::new(a_pq.pop().expect("Ran out of moves; looks like the board is unsolveable"));
-        b_state = Rc::new(b_pq.pop().expect("Ran out of moves; looks like the board is unsolveable"));
+        a_state_rc = Rc::new(a_pq.pop().expect("From any search node there is at least 1 legal move"));
+        b_state_rc = Rc::new(b_pq.pop().expect("From any search node there is at least 1 legal move"));
     }
 
-    if b_state.board.is_goal() {
+    if b_state_rc.board.is_goal() {
         None
     } else {
-        let mut solution = Vec::with_capacity(a_state.depth as usize + 1 as usize);
-        while a_state.parent.is_some() {
-            solution.push(a_state.board.clone());
-            a_state = rc::try_unwrap(a_state).ok().unwrap().parent.unwrap();
+        let mut current = &a_state_rc;
+        let mut solution = Vec::with_capacity(current.depth as usize + 1 as usize);
+        while current.parent.is_some() {
+            solution.push(current.board.clone());
+            current = current.parent.as_ref().unwrap();
         }
-        solution.push(a_state.board.clone());
+        solution.push(current.board.clone());
         solution.reverse();
         Some(solution)
     }
@@ -116,5 +117,26 @@ mod tests {
             // println!("Trying to solve: {:?}", board);
             solve(&board);
         }
+    }
+
+    #[test]
+    fn solve_finishes_for_a_lot_of_boards_of_size_3() {
+        let arbitrary_big_prime = 3299; // because there are a lot of permutations of a 9 element array, only solve some
+        let all_size_3_boards = board::generate_all_boards_of_size(3);
+        let mut count = 0;
+        let mut avg_steps = 0.0;
+        let mut failures = 0;
+        for board in all_size_3_boards.iter()
+                                      .enumerate()
+                                      .filter(|&(i, _)| i % arbitrary_big_prime == 0)
+                                      .map(|(_, b)| b) {
+            // println!("Solving {:?}...", board);
+            match solve(&board) {
+                Some(solution) => avg_steps = (avg_steps * count as f64 + solution.len() as f64) / (count as f64 + 1.0),
+                None => failures += 1,
+            }
+            count += 1;
+        }
+        println!("Solved {}/{} 3x3 boards; average solution length = {}", count - failures, count, avg_steps);
     }
 }

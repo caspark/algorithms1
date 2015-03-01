@@ -1,4 +1,3 @@
-#![feature(alloc)]
 #![feature(collections)]
 #![feature(core)]
 
