@@ -1,5 +1,4 @@
-use std::num::Int;
-use std::num::SignedInt;
+use std::num::{Int, SignedInt};
 use std::iter::IteratorExt;
 
 /// An 8 Puzzle board (or N puzzle board).
@@ -126,12 +125,15 @@ impl Board {
         if dim < 2 {
             panic!("Boards of less than dimension 2 have no twin");
         }
-        if self.board[1] == 0 {
-            self.create_swapped(0, 0, 0, 1)
-        } else {
-            self.create_swapped(0, 0, 1, 0)
-        }
+        let (first_x, first_y) = if self.board[0] != 0 { (0, 0) } else { (1, 1) };
+        let (second_x, second_y) = if self.board[1] != 0 { (1, 0) } else { (0, 1) };
+        self.create_swapped(first_x, first_y, second_x, second_y)
     }
+}
+
+pub fn generate_all_boards_of_size(dim: i64) -> Vec<Board> {
+    let base_board = (0 .. dim.pow(2)).collect::<Vec<i64>>();
+    base_board[..].permutations().map(|perm_vec| Board::new(perm_vec)).collect()
 }
 
 #[cfg(test)]

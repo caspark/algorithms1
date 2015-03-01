@@ -44,39 +44,37 @@ impl PartialEq for BoardState {
 impl Eq for BoardState {}
 
 pub fn solve(board: &Board) -> Option<Vec<Board>> {
-    let mut pq = BinaryHeap::new();
-    let mut pq_twin = BinaryHeap::new();
-    let mut state = Rc::new(BoardState::new(None, 0, board.clone()));
-    let mut state_twin = Rc::new(BoardState::new(None, 0, board.twin()));
-    while !state.board.is_goal() && !state_twin.board.is_goal() {
-        // println!("Current state is {:?}", state.board);
-        for neighbour in state.board.neighbours() {
-            if state.parent.is_none() || state.parent.as_ref().unwrap().board != neighbour {
-                pq.push(BoardState::new(Some(state.clone()), state.depth + 1, neighbour));
+    let mut a_pq = BinaryHeap::new();
+    let mut b_pq = BinaryHeap::new();
+    let mut a_state = Rc::new(BoardState::new(None, 0, board.clone()));
+    let mut b_state = Rc::new(BoardState::new(None, 0, board.twin()));
+
+    while !a_state.board.is_goal() && !b_state.board.is_goal() {
+        // println!("Current a_state is {:?}", a_state.board);
+        for neighbour in a_state.board.neighbours() {
+            if a_state.parent.is_none() || a_state.parent.as_ref().unwrap().board != neighbour {
+                a_pq.push(BoardState::new(Some(a_state.clone()), a_state.depth + 1, neighbour));
             }
         }
-        for neighbour in state_twin.board.neighbours() {
-            if state_twin.parent.is_none() || state_twin.parent.as_ref().unwrap().board != neighbour {
-                pq_twin.push(BoardState::new(Some(state_twin.clone()), state_twin.depth + 1, neighbour));
+        for neighbour in b_state.board.neighbours() {
+            if b_state.parent.is_none() || b_state.parent.as_ref().unwrap().board != neighbour {
+                b_pq.push(BoardState::new(Some(b_state.clone()), b_state.depth + 1, neighbour));
             }
         }
 
-        //FIXME distance measures sometimes both increase & decrease
-        // println!("Board: {:?} Twin: {:?}", state.priority, state_twin.priority);
-
-        state = Rc::new(pq.pop().expect("Ran out of moves; looks like the board is unsolveable"));
-        state_twin = Rc::new(pq_twin.pop().expect("Ran out of moves; looks like the board is unsolveable"));
+        a_state = Rc::new(a_pq.pop().expect("Ran out of moves; looks like the board is unsolveable"));
+        b_state = Rc::new(b_pq.pop().expect("Ran out of moves; looks like the board is unsolveable"));
     }
 
-    if state_twin.board.is_goal() {
+    if b_state.board.is_goal() {
         None
     } else {
-        let mut solution = Vec::with_capacity(state.depth as usize + 1 as usize);
-        while state.parent.is_some() {
-            solution.push(state.board.clone());
-            state = rc::try_unwrap(state).ok().unwrap().parent.unwrap();
+        let mut solution = Vec::with_capacity(a_state.depth as usize + 1 as usize);
+        while a_state.parent.is_some() {
+            solution.push(a_state.board.clone());
+            a_state = rc::try_unwrap(a_state).ok().unwrap().parent.unwrap();
         }
-        solution.push(state.board.clone());
+        solution.push(a_state.board.clone());
         solution.reverse();
         Some(solution)
     }
@@ -86,7 +84,7 @@ pub fn solve(board: &Board) -> Option<Vec<Board>> {
 #[cfg(test)]
 mod tests {
     use super::solve;
-    use board::Board;
+    use board::{self, Board};
 
     #[test]
     fn solve_already_solved_board() {
@@ -113,19 +111,10 @@ mod tests {
     }
 
     #[test]
-    fn try_to_solve_known_problem() {
-        //FIXME solving some boards doesn't work (program runs forever)
-        // known problem cases: [0, 1, 2, 3], [0, 3, 1, 2], [0, 2, 3, 1]
-        let b = Board::new(vec![0, 1, 2, 3]);
-        println!("Trying to solve: {:?}", b);
-        solve(&b);
+    fn solve_finishes_for_all_boards_of_size_2() {
+        for board in board::generate_all_boards_of_size(2) {
+            // println!("Trying to solve: {:?}", board);
+            solve(&board);
+        }
     }
-
-    //FIXME commented out until known problem case above is solved
-    // #[test]
-    // fn solve_finishes_for_random_board_of_size_2() {
-    //     let random = Board::random(2);
-    //     println!("Trying to solve: {:?}", random);
-    //     solve(&random);
-    // }
 }
