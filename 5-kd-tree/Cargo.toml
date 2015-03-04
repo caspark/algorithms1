@@ -1,0 +1,5 @@
+[package]
+
+name = "kd-tree"
+version = "0.0.1"
+authors = ["Caspar Krieger <caspar@asparck.com>"]
