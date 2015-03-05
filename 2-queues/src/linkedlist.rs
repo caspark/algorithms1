@@ -40,8 +40,8 @@ impl<E> LinkedList<E> {
     }
 
     pub fn remove_first(&mut self) -> Option<E> {
-        self.size -= 1;
         self.first.take().map(|boxed_node| {
+            self.size -= 1;
             let node = *boxed_node;
             self.first = node.next; // mutating state in a map, wooo!
             node.item

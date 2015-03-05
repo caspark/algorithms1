@@ -1,6 +1,5 @@
 #![feature(collections)]
 #![feature(core)]
-#![feature(env)]
 #![feature(fs)]
 #![feature(io)]
 #![feature(plugin)]

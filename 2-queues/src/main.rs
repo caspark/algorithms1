@@ -1,5 +1,4 @@
 #![feature(collections)] // for Vec.push_all()
-#![feature(env)]
 #![feature(old_io)]
 
 extern crate rand;

@@ -10,7 +10,7 @@ pub fn read_input_file(filename: &String) -> io::Result<Vec<(i32, i32)>> {
 
     let re = regex!(r"\s*(?P<x>\d+)\s+(?P<y>\d+)");
     let mut points = Vec::new();
-    for line in content.split_str("\n").skip(1) {
+    for line in content.split("\n").skip(1) {
         if line.len() == 0 {
             break; // end of file
         }

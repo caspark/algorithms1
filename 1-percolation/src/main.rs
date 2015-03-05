@@ -1,5 +1,4 @@
 #![feature(core)] // needed for a whole bunch of unstable features
-#![feature(env)] // this was recently added so tell rust to be quiet about it
 #![feature(collections)] // so we can get the tail of a vector
 #![feature(test)] // so we can run benchmarks
 
