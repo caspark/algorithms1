@@ -66,13 +66,13 @@ mod tests {
     use point::Point;
 
     #[test]
-    #[should_fail(expected = "rect x min coord must be < x max coord!")]
+    #[should_panic(expected = "rect x min coord must be < x max coord!")]
     fn invalid_x_rect_cannot_be_constructed() {
         Rect::new([0.0, 0.0, -1.0, 1.0]);
     }
 
     #[test]
-    #[should_fail(expected = "rect y min coord must be < y max coord!")]
+    #[should_panic(expected = "rect y min coord must be < y max coord!")]
     fn invalid_y_rect_cannot_be_constructed() {
         Rect::new([0.0, 0.0, 1.0, -1.0]);
     }
