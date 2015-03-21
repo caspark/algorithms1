@@ -1,4 +1,4 @@
-use graphics::{self, Context, Ellipse, Line, rectangle, Rectangle, RelativeTransform};
+use graphics::{self, Line, rectangle, RelativeTransform};
 use std::cell::RefCell;
 use opengl_graphics::{Gl, OpenGL};
 use piston::window::WindowSettings;

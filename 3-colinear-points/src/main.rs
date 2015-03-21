@@ -1,7 +1,5 @@
 #![feature(collections)]
 #![feature(core)]
-#![feature(fs)]
-#![feature(io)]
 #![feature(plugin)]
 
 #![plugin(regex_macros)]
