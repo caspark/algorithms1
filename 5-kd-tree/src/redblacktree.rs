@@ -49,11 +49,11 @@ impl<'a, K, V> RedBlackTree<K, V> where K: Ord {
         self.root.is_none()
     }
 
-    pub fn get(&self, key: K) -> Option<&V> {
+    pub fn get(&self, key: &K) -> Option<&V> {
         RedBlackTree::get_from_node(self.root.as_ref(), key)
     }
 
-    fn get_from_node(mut node: Option<&'a Box<Node<K, V>>>, key: K) -> Option<&'a V> {
+    fn get_from_node(mut node: Option<&'a Box<Node<K, V>>>, key: &K) -> Option<&'a V> {
         loop {
             node = match node {
                 None => return None,
@@ -68,7 +68,7 @@ impl<'a, K, V> RedBlackTree<K, V> where K: Ord {
         };
     }
 
-    pub fn contains(&self, key: K) -> bool {
+    pub fn contains(&self, key: &K) -> bool {
         self.get(key).is_some()
     }
 
@@ -154,8 +154,8 @@ mod tests {
     fn get_and_contains() {
         let t = RedBlackTree::<String, i32>::new();
 
-        assert!(!t.contains("MyStr".to_string()));
-        assert_eq!(t.get("MyStr".to_string()), None);
+        assert!(!t.contains(&"MyStr".to_string()));
+        assert_eq!(t.get(&"MyStr".to_string()), None);
 
         //TODO add an item and check the get and contains changes
     }
