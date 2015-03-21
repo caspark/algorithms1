@@ -1,9 +1,26 @@
 use std::cmp::{Ord, Ordering};
+use std::mem;
 
 #[derive(Debug, Eq, PartialEq, Copy)]
 enum Color {
     Red,
     Black,
+}
+
+impl Color {
+    /// If red, change to black. If black, change to red.
+    fn invert(&mut self) {
+        let opposite = self.opposite();
+        mem::replace(self, opposite);
+    }
+
+    /// If red, return black. If black, return red.
+    fn opposite(&self) -> Color {
+        match self {
+            &Color::Red => Color::Black,
+            &Color::Black => Color::Red,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -118,6 +135,8 @@ impl<'a, K, V> RedBlackTree<K, V> where K: Ord {
                 };
 
                 //HACK: we can't move `node` because we've only borrowed it, so construct a new node which is the same
+                // Perhaps we can work around this by taking ownership in the function, by having the root store
+                // an Option which can be take()n at the top level - that should be more performant.
                 let mut node = Node {
                     key: node.key.take(),
                     value: node.value.take(),
@@ -134,16 +153,17 @@ impl<'a, K, V> RedBlackTree<K, V> where K: Ord {
                 if is_red(node.left.as_ref()) && is_red(node.left.as_ref().expect("Must have a left node because it's red").left.as_ref()) {
                     node = RedBlackTree::rotate_right(node);
                 }
-                // if is_red(node.left.as_ref()) && is_red(node.right.as_ref()) {
-                //     RedBlackTree::flip_colors(node);
-                // }
-                // node.n = size(node.left.as_ref()) + size(node.right.as_ref()) + 1;
+                if is_red(node.left.as_ref()) && is_red(node.right.as_ref()) {
+                    RedBlackTree::flip_colors(&mut node);
+                }
+                node.n = size(node.left.as_ref()) + size(node.right.as_ref()) + 1;
 
                 node
             },
         }
     }
 
+    /// make a left-leaning link lean to the right
     fn rotate_left(mut h: Node<K, V>) -> Node<K, V> {
         assert!(is_red(h.right.as_ref()));
 
@@ -160,12 +180,34 @@ impl<'a, K, V> RedBlackTree<K, V> where K: Ord {
         x
     }
 
-    fn rotate_right(h: Box<Node<K, V>>) -> Box<Node<K, V>> {
-        panic!("Not yet implemented");
+    /// make a right-leaning link lean to the left
+    fn rotate_right(mut h: Node<K, V>) -> Node<K, V> {
+        assert!(is_red(h.left.as_ref()));
+
+        let mut x = *h.left.take().expect("h must have a left node because we checked that it's red");
+        h.left = x.right.take();
+        x.right = Some(Box::new(h));
+        { // restrict scope of borrow
+            let h_pm = x.right.as_mut().expect("x must have a right child because we just set it");
+            x.color = h_pm.color;
+            h_pm.color = Color::Red;
+            x.n = h_pm.n;
+            h_pm.n = size(h_pm.left.as_ref()) + size(h_pm.right.as_ref()) + 1;
+        }
+        x
     }
 
-    fn flip_colors(h: Box<Node<K, V>>) -> Box<Node<K, V>> {
-        panic!("Not yet implemented");
+    /// flip the colors of a node and its two children
+    fn flip_colors(h: &mut Node<K, V>) {
+        // assert that h has opposite color of its two children
+        assert!(h.left.is_some(), "flip_colors: h must have 2 children but is missing a left child");
+        assert!(h.right.is_some(), "flip_colors: h must have 2 children but is missing a right child");
+        assert!(is_red(h.left.as_ref()) == is_red(h.right.as_ref()), "flip_colors: h's left & right children must be the same colour");
+        assert!(h.color != h.left.as_ref().unwrap().color, "flip_colors: h must be of opposite colour to its children");
+
+        h.color.invert();
+        h.left.as_mut().unwrap().color.invert();
+        h.right.as_mut().unwrap().color.invert();
     }
 }
 
@@ -186,11 +228,16 @@ mod tests {
 
     #[test]
     fn get_and_contains() {
-        let t = RedBlackTree::<String, i32>::new();
+        let mut t = RedBlackTree::<String, i32>::new();
 
         assert!(!t.contains(&"MyStr".to_string()));
         assert_eq!(t.get(&"MyStr".to_string()), None);
 
-        //TODO add an item and check the get and contains changes
+        t.put("One".to_string(), 1);
+        t.put("Two".to_string(), 2);
+        t.put("Three".to_string(), 3);
+
+        assert!(t.contains(&"One".to_string()));
+        assert_eq!(t.get(&"Two".to_string()), Some(&2));
     }
 }
