@@ -46,17 +46,14 @@ pub fn display(points: &[Point], incoming_lines: Receiver<Option<[i32; 4]>>) {
             let max_y = bounds[3] as f64;
             let scale_y = args.height as f64 / (max_y - min_y);
 
-            let context = &Context::abs(args.width as f64, args.height as f64)
-                            .scale(scale_x, scale_y)
-                            .flip_v()
-                            .trans(-min_x, -min_y - max_y); // also do "- max_y" because we flip_v'd earlier
-
             let dot_sx = 3f64 / scale_x;
             let dot_sy = 3f64 / scale_y;
 
-            //FIXME we're setting the viewport here using https://github.com/PistonDevelopers/opengl_graphics/blob/master/src/gl_back_end.rs
-            // but we're ignoring the provided context and using our own instead, which doesn't seem right.
-            gl.draw([0, 0, args.width as i32, args.height as i32], |_, gl| {
+            gl.draw([0, 0, args.width as i32, args.height as i32], |context, gl| {
+                let context = &context.scale(scale_x, scale_y)
+                                .flip_v()
+                                .trans(-min_x, -min_y - max_y); // also do "- max_y" because we flip_v'd earlier
+
                 graphics::clear(if complete { [0.0, 0.0, 0.0, 1.0] } else { [0.5, 0.5, 0.5, 1.0] }, gl);
 
                 let blue = [0.0, 0.0, 1.0, 1.0];
