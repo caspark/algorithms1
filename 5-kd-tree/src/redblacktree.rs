@@ -25,32 +25,12 @@ impl Color {
 
 #[derive(Debug)]
 struct Node<K, V> {
-    // in practice, Key is always a Some while the RedBlackTree is "at rest"; however, during a function call, we use
-    // Option's take() to take ownership of `key` from an &mut because other we cannot guarantee K has a zero value
-    // for use with mem::replace() in another way.
-    key: Option<K>,
-    value: Option<V>, // same as for Key: this should always be a Some when the tree is "at rest".
+    key: K,
+    value: V,
     left: Option<Box<Node<K, V>>>,
     right: Option<Box<Node<K, V>>>,
     color: Color,
     n: i32, // subtree count
-}
-
-impl<K, V> Node<K, V> {
-    /// Convenience method to get a reference to the key
-    fn key(&self) -> &K {
-        self.key.as_ref().expect("Key is expected to be present in a node")
-    }
-
-    /// Convenience method to get a reference to the value
-    fn value(&self) -> &V {
-        self.value.as_ref().expect("Value is expected to be present in a node")
-    }
-
-    // /// Invalidates this node (removes the key and value)
-    // fn take(&mut self) -> Node {
-    //
-    // }
 }
 
 fn is_red<K, V>(maybe_node: Option<&Box<Node<K, V>>>) -> bool {
@@ -95,9 +75,9 @@ impl<'a, K, V> RedBlackTree<K, V> where K: Ord {
             node = match node {
                 None => return None,
                 Some(ref curr_node) => {
-                    match key.cmp(curr_node.key()) {
+                    match key.cmp(&curr_node.key) {
                         Ordering::Less => curr_node.left.as_ref(),
-                        Ordering::Equal => return Some(&curr_node.value()),
+                        Ordering::Equal => return Some(&curr_node.value),
                         Ordering::Greater => curr_node.right.as_ref(),
                     }
                 },
@@ -110,48 +90,36 @@ impl<'a, K, V> RedBlackTree<K, V> where K: Ord {
     }
 
     pub fn put(&mut self, key: K, val: V) {
-        let mut new_root = RedBlackTree::put_in_node(self.root.as_mut(), key, val);
+        let mut new_root = RedBlackTree::put_in_node(self.root.take(), key, val);
         new_root.color = Color::Black;
-        self.root = Some(Box::new(new_root));
+        self.root = Some(new_root);
     }
 
-    fn put_in_node(maybe_node: Option<&mut Box<Node<K, V>>>, key: K, val: V) -> Node<K, V> {
+    fn put_in_node(maybe_node: Option<Box<Node<K, V>>>, key: K, val: V) -> Box<Node<K, V>> {
         match maybe_node {
-            None => Node {
-                key: Some(key),
-                value: Some(val),
+            None => Box::new(Node {
+                key: key,
+                value: val,
                 left: None,
                 right: None,
                 color: Color::Red,
                 n: 1,
-            },
+            }),
             Some(mut node) => {
-                match key.cmp(node.key()) {
+                match key.cmp(&node.key) {
                     Ordering::Less => {
-                        node.left = Some(Box::new(RedBlackTree::put_in_node(node.left.as_mut(), key, val)))
+                        node.left = Some(RedBlackTree::put_in_node(node.left.take(), key, val))
                     },
-                    Ordering::Equal => node.value = Some(val),
-                    Ordering::Greater => node.right = Some(Box::new(RedBlackTree::put_in_node(node.right.as_mut(), key, val))),
-                };
-
-                //HACK: we can't move `node` because we've only borrowed it, so construct a new node which is the same
-                // Perhaps we can work around this by taking ownership in the function, by having the root store
-                // an Option which can be take()n at the top level - that should be more performant.
-                let mut node = Node {
-                    key: node.key.take(),
-                    value: node.value.take(),
-                    left: node.left.take(),
-                    right: node.right.take(),
-                    color: node.color,
-                    n: node.n,
+                    Ordering::Equal => node.value = val,
+                    Ordering::Greater => node.right = Some(RedBlackTree::put_in_node(node.right.take(), key, val)),
                 };
 
                 //fix up any right leaning links
                 if is_red(node.right.as_ref()) && !is_red(node.left.as_ref()) {
-                    node = RedBlackTree::rotate_left(node);
+                    node = Box::new(RedBlackTree::rotate_left(*node));
                 }
                 if is_red(node.left.as_ref()) && is_red(node.left.as_ref().expect("Must have a left node because it's red").left.as_ref()) {
-                    node = RedBlackTree::rotate_right(node);
+                    node = Box::new(RedBlackTree::rotate_right(*node));
                 }
                 if is_red(node.left.as_ref()) && is_red(node.right.as_ref()) {
                     RedBlackTree::flip_colors(&mut node);
