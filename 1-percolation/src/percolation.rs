@@ -161,14 +161,14 @@ mod tests {
     }
 
     #[test]
-    #[should_fail(expected = "Out of bounds: (9, 0)")]
-    fn percolation_is_open_for_out_of_bounds_should_fail() {
+    #[should_panic(expected = "Out of bounds: (9, 0)")]
+    fn percolation_is_open_for_out_of_bounds_should_panic() {
         Percolation::new(10usize).is_open(9, 0);
     }
 
     #[test]
-    #[should_fail(expected = "Out of bounds: (0, 5)")]
-    fn percolation_opening_out_of_bounds_should_fail() {
+    #[should_panic(expected = "Out of bounds: (0, 5)")]
+    fn percolation_opening_out_of_bounds_should_panic() {
         Percolation::new(10usize).open(0, 5);
     }
 }

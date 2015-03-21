@@ -38,7 +38,6 @@ pub fn display(points: &[Point], incoming_lines: Receiver<Option<[i32; 4]>>) {
 
     for e in events(&window) {
         if let Some(args) = e.render_args() {
-            graphics::clear(if complete { [0.0, 0.0, 0.0, 1.0] } else { [0.5, 0.5, 0.5, 1.0] }, gl);
 
             let min_x = bounds[0] as f64;
             let max_x = bounds[1] as f64;
@@ -55,21 +54,27 @@ pub fn display(points: &[Point], incoming_lines: Receiver<Option<[i32; 4]>>) {
             let dot_sx = 3f64 / scale_x;
             let dot_sy = 3f64 / scale_y;
 
-            let blue_dot = Ellipse::new([0.0, 0.0, 1.0, 1.0]);
-            for p in points {
-                blue_dot.draw(rectangle::centered([p.x as f64, p.y as f64, dot_sx, dot_sy]), context, gl);
-            }
+            //FIXME we're setting the viewport here using https://github.com/PistonDevelopers/opengl_graphics/blob/master/src/gl_back_end.rs
+            // but we're ignoring the provided context and using our own instead, which doesn't seem right.
+            gl.draw([0, 0, args.width as i32, args.height as i32], |_, gl| {
+                graphics::clear(if complete { [0.0, 0.0, 0.0, 1.0] } else { [0.5, 0.5, 0.5, 1.0] }, gl);
 
-            let red_line = Line::new([1.0, 0.0, 0.0, 1.0], 1f64 / cmp::partial_min(scale_x, scale_y).unwrap_or(scale_x));
-            for line in &lines {
-                red_line.draw(*line, context, gl);
-            }
+                let blue = [0.0, 0.0, 1.0, 1.0];
+                for p in points {
+                    graphics::ellipse(blue, rectangle::centered([p.x as f64, p.y as f64, dot_sx, dot_sy]), context.transform, gl);
+                }
 
-            let green_rect = Rectangle::new([0.0, 1.0, 0.0, 1.0]);
-            green_rect.draw(rectangle::centered([min_x, min_y, dot_sx, dot_sy]), context, gl);
-            green_rect.draw(rectangle::centered([min_x, max_y, dot_sx, dot_sy]), context, gl);
-            green_rect.draw(rectangle::centered([max_x, min_y, dot_sx, dot_sy]), context, gl);
-            green_rect.draw(rectangle::centered([max_x, max_y, dot_sx, dot_sy]), context, gl);
+                let red_line = Line::new([1.0, 0.0, 0.0, 1.0], 1f64 / cmp::partial_min(scale_x, scale_y).unwrap_or(scale_x));
+                for line in &lines {
+                    red_line.draw(*line, graphics::default_draw_state(), context.transform, gl);
+                }
+
+                let green = [0.0, 1.0, 0.0, 1.0];
+                graphics::rectangle(green, rectangle::centered([min_x, min_y, dot_sx, dot_sy]), context.transform, gl);
+                graphics::rectangle(green, rectangle::centered([min_x, max_y, dot_sx, dot_sy]), context.transform, gl);
+                graphics::rectangle(green, rectangle::centered([max_x, min_y, dot_sx, dot_sy]), context.transform, gl);
+                graphics::rectangle(green, rectangle::centered([max_x, max_y, dot_sx, dot_sy]), context.transform, gl);
+            });
         }
 
         if let Some(_) = e.update_args() {
