@@ -1,14 +1,14 @@
-struct Node {
-    next: Option<Box<Node>>,
-    val: i32,
+struct Node<E> {
+    next: Option<Box<Node<E>>>,
+    val: Option<E>,
 }
 
-fn put_after_node(maybe_node: Option<Box<Node>>, val: i32) -> Box<Node> {
+fn put_after_node<E>(maybe_node: &mut Option<Box<Node<E>>>, val: E) -> Node<E> {
     match maybe_node {
-        None => Box::new(Node { next: None, val: val }),
-        Some(mut node) => {
-            node.next = Some(put_after_node(node.next.take(), val));
-            node
+        &mut None => Node { next: None, val: Some(val) },
+        &mut Some(ref mut node) => {
+            let next = put_after_node(&mut node.next, val);
+            Node { next: Some(Box::new(next)), val: node.val.take() }
         }
     }
 }
