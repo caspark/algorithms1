@@ -53,10 +53,9 @@ impl<'a, K, V> RedBlackTree<K, V> where K: Ord {
         RedBlackTree::get_from_node(self.root.as_ref(), key)
     }
 
-    fn get_from_node(node: Option<&'a Box<Node<K, V>>>, key: K) -> Option<&'a V> {
-        let mut curr = node;
+    fn get_from_node(mut node: Option<&'a Box<Node<K, V>>>, key: K) -> Option<&'a V> {
         loop {
-            curr = match curr {
+            node = match node {
                 None => return None,
                 Some(ref curr_node) => {
                     match key.cmp(&curr_node.key) {
