@@ -107,9 +107,7 @@ impl<'t, K, V> RedBlackTree<K, V> where K: Ord {
             }),
             Some(mut node) => {
                 match key.cmp(&node.key) {
-                    Ordering::Less => {
-                        node.left = Some(RedBlackTree::put_in_node(node.left.take(), key, val))
-                    },
+                    Ordering::Less => node.left = Some(RedBlackTree::put_in_node(node.left.take(), key, val)),
                     Ordering::Equal => node.value = val,
                     Ordering::Greater => node.right = Some(RedBlackTree::put_in_node(node.right.take(), key, val)),
                 };
@@ -118,7 +116,7 @@ impl<'t, K, V> RedBlackTree<K, V> where K: Ord {
                 if is_red(node.right.as_ref()) && !is_red(node.left.as_ref()) {
                     node = Box::new(RedBlackTree::rotate_left(*node));
                 }
-                if is_red(node.left.as_ref()) && is_red(node.left.as_ref().expect("Must have a left node because it's red").left.as_ref()) {
+                if is_red(node.left.as_ref()) && is_red(node.left.as_ref().expect("left node is red -> it exists").left.as_ref()) {
                     node = Box::new(RedBlackTree::rotate_right(*node));
                 }
                 if is_red(node.left.as_ref()) && is_red(node.right.as_ref()) {
@@ -128,6 +126,34 @@ impl<'t, K, V> RedBlackTree<K, V> where K: Ord {
 
                 node
             },
+        }
+    }
+
+    //TODO it'd be nice to return the deleted element here, which also avoids panicking when the tree is empty
+    pub fn delete_min(&mut self) {
+        let mut taken_root = self.root.take().expect("Tree should not be empty");
+        if !is_red(taken_root.left.as_ref()) && !is_red(taken_root.right.as_ref()) {
+            taken_root.color = Color::Red;
+        }
+
+        self.root = RedBlackTree::delete_min_node(taken_root);
+        if !self.is_empty() { //TODO map instead
+            self.root.as_mut().expect("tree is known to be non-empty").color = Color::Black;
+        }
+        //TODO implement check_state()
+        // assert!(self.check_state());
+    }
+
+    fn delete_min_node(mut h: Box<Node<K, V>>) -> Option<Box<Node<K, V>>> {
+        if h.left.is_none() {
+            None
+        } else {
+            if !is_red(h.left.as_ref()) && !is_red(h.left.as_ref().expect("left node is red -> it exists").left.as_ref()) {
+                h = Box::new(RedBlackTree::move_red_left(*h));
+            }
+
+            h.left = RedBlackTree::delete_min_node(h.left.take().expect("h.left should exist"));
+            Some(Box::new(RedBlackTree::balance(*h)))
         }
     }
 
@@ -176,6 +202,36 @@ impl<'t, K, V> RedBlackTree<K, V> where K: Ord {
         h.color.invert();
         h.left.as_mut().unwrap().color.invert();
         h.right.as_mut().unwrap().color.invert();
+    }
+
+    /// Assuming that h is red and both h.left and h.left.left are black, make h.left or one of its children red.
+    fn move_red_left(mut h: Node<K, V>) -> Node<K, V> {
+        assert!(h.color == Color::Red, "h must be red");
+        assert!(!is_red(h.left.as_ref()));
+        assert!(!is_red(h.left.as_ref().expect("h.left should exist").left.as_ref()));
+
+        RedBlackTree::flip_colors(&mut h);
+        if is_red(h.right.as_ref().expect("h.right should exist").left.as_ref()) {
+            h.right = Some(Box::new(RedBlackTree::rotate_right(*h.right.expect("h.right should exist"))));
+            h = RedBlackTree::rotate_left(h);
+            RedBlackTree::flip_colors(&mut h);
+        }
+        h
+    }
+
+    /// Restore red-black tree invariant
+    fn balance(mut h: Node<K, V>) -> Node<K, V> {
+        if is_red(h.right.as_ref()) {
+            h = RedBlackTree::rotate_left(h);
+        }
+        if is_red(h.left.as_ref()) && is_red(h.left.as_ref().expect("h.left is red -> it exists").left.as_ref()) {
+            h = RedBlackTree::rotate_right(h);
+        }
+        if is_red(h.left.as_ref()) && is_red(h.right.as_ref()) {
+            RedBlackTree::flip_colors(&mut h);
+        }
+        h.n = size(h.left.as_ref()) + size(h.right.as_ref()) + 1;
+        h
     }
 }
 
@@ -230,6 +286,42 @@ mod tests {
             for i in xs {
                 if t.get(&i) != Some(&format!("Num {}", i)) {
                     return false;
+                }
+            }
+
+            true
+        }
+        quickcheck(prop as fn(Vec<i32>) -> bool);
+    }
+
+    #[test] //FIXME test is currently failing
+    fn delete_min() {
+        fn prop(mut xs: Vec<i32>) -> bool {
+            //TODO discard property value instead of returning tree
+            if xs.len() == 0 {
+                return true;
+            }
+
+            let mut t = RedBlackTree::<i32, String>::new();
+
+            for i in xs.clone() {
+                t.put(i, format!("Num {}", i));
+            }
+
+            let min = xs.iter().min().expect("xs len is known to be > 0");
+
+            for i in xs.iter() {
+                if i == min {
+                    if t.contains(&min) {
+                        return false;
+                    }
+                    if t.get(&min) != None {
+                        return false;
+                    }
+                } else {
+                    if t.get(&i) != Some(&format!("Num {}", i)) {
+                        return false;
+                    }
                 }
             }
 
