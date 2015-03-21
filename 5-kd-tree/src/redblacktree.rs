@@ -215,15 +215,21 @@ impl<'a, K, V> RedBlackTree<K, V> where K: Ord {
 #[cfg(test)]
 mod tests {
     use super::RedBlackTree;
+    use quickcheck::quickcheck;
 
     #[test]
     fn size_and_empty() {
-        let t = RedBlackTree::<(), ()>::new();
+        let mut t = RedBlackTree::<i32, i32>::new();
 
         assert!(t.is_empty());
         assert_eq!(t.size(), 0);
 
-        //TODO add an item and check the size & empty status changes
+        t.put(1, -1);
+        assert!(!t.is_empty());
+        assert_eq!(t.size(), 1);
+        t.put(2, -2);
+        assert!(!t.is_empty());
+        assert_eq!(t.size(), 2);
     }
 
     #[test]
@@ -239,5 +245,28 @@ mod tests {
 
         assert!(t.contains(&"One".to_string()));
         assert_eq!(t.get(&"Two".to_string()), Some(&2));
+    }
+
+    #[test]
+    fn put_various_values() {
+        fn prop(mut xs: Vec<i32>) -> bool {
+            use rand::{thread_rng, Rng};
+
+            let mut t = RedBlackTree::<i32, String>::new();
+
+            for i in xs.clone() {
+                t.put(i, format!("Num {}", i));
+            }
+
+            thread_rng().shuffle(&mut xs);
+            for i in xs {
+                if t.get(&i) != Some(&format!("Num {}", i)) {
+                    return false;
+                }
+            }
+
+            true
+        }
+        quickcheck(prop as fn(Vec<i32>) -> bool);
     }
 }
