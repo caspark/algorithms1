@@ -30,7 +30,7 @@ struct Node<K, V> {
     left: Option<Box<Node<K, V>>>,
     right: Option<Box<Node<K, V>>>,
     color: Color,
-    n: i32, // subtree count
+    n: i32, // size of this subtree
 }
 
 fn is_red<K, V>(maybe_node: Option<&Box<Node<K, V>>>) -> bool {
@@ -51,7 +51,7 @@ struct RedBlackTree<K, V> {
     root: Option<Box<Node<K, V>>>,
 }
 
-impl<'a, K, V> RedBlackTree<K, V> where K: Ord {
+impl<'t, K, V> RedBlackTree<K, V> where K: Ord {
     pub fn new() -> RedBlackTree<K, V> {
         RedBlackTree {
             root: None
@@ -70,7 +70,7 @@ impl<'a, K, V> RedBlackTree<K, V> where K: Ord {
         RedBlackTree::get_from_node(self.root.as_ref(), key)
     }
 
-    fn get_from_node(mut node: Option<&'a Box<Node<K, V>>>, key: &K) -> Option<&'a V> {
+    fn get_from_node(mut node: Option<&'t Box<Node<K, V>>>, key: &K) -> Option<&'t V> {
         loop {
             node = match node {
                 None => return None,
