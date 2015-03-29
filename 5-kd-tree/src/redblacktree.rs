@@ -239,7 +239,7 @@ impl<'t, K, V> RedBlackTree<K, V> where K: Ord {
 #[cfg(test)]
 mod tests {
     use super::RedBlackTree;
-    use quickcheck::quickcheck;
+    use quickcheck::{quickcheck, TestResult};
 
     #[test]
     fn size_and_empty() {
@@ -296,10 +296,9 @@ mod tests {
 
     #[test]
     fn delete_min() {
-        fn prop(mut xs: Vec<i32>) -> bool {
-            //TODO discard property value instead of returning tree
+        fn prop(xs: Vec<i32>) -> TestResult {
             if xs.len() == 0 {
-                return true;
+                return TestResult::discard();
             }
 
             let mut t = RedBlackTree::<i32, String>::new();
@@ -314,20 +313,20 @@ mod tests {
             for i in xs.iter() {
                 if i == min {
                     if t.contains(&min) {
-                        return false;
+                        return TestResult::failed();
                     }
                     if t.get(&min) != None {
-                        return false;
+                        return TestResult::failed();
                     }
                 } else {
                     if t.get(&i) != Some(&format!("Num {}", i)) {
-                        return false;
+                        return TestResult::failed();
                     }
                 }
             }
 
-            true
+            TestResult::passed()
         }
-        quickcheck(prop as fn(Vec<i32>) -> bool);
+        quickcheck(prop as fn(Vec<i32>) -> TestResult);
     }
 }
