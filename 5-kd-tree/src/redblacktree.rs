@@ -93,6 +93,7 @@ impl<'t, K, V> RedBlackTree<K, V> where K: Ord {
         let mut new_root = RedBlackTree::put_in_node(self.root.take(), key, val);
         new_root.color = Color::Black;
         self.root = Some(new_root);
+        assert!(self.check_state());
     }
 
     fn put_in_node(maybe_node: Option<Box<Node<K, V>>>, key: K, val: V) -> Box<Node<K, V>> {
@@ -137,11 +138,8 @@ impl<'t, K, V> RedBlackTree<K, V> where K: Ord {
         }
 
         self.root = RedBlackTree::delete_min_node(taken_root);
-        if !self.is_empty() { //TODO map instead
-            self.root.as_mut().expect("tree is known to be non-empty").color = Color::Black;
-        }
-        //TODO implement check_state()
-        // assert!(self.check_state());
+        self.root.as_mut().map(|root| root.color = Color::Black);
+        assert!(self.check_state());
     }
 
     fn delete_min_node(mut h: Box<Node<K, V>>) -> Option<Box<Node<K, V>>> {
@@ -232,6 +230,96 @@ impl<'t, K, V> RedBlackTree<K, V> where K: Ord {
         }
         h.n = size(h.left.as_ref()) + size(h.right.as_ref()) + 1;
         h
+    }
+
+    fn check_state(&self) -> bool {
+        self.is_bst() && self.is_size_consistent() && self.is_rank_consistent() && self.is_2_3() && self.is_balanced()
+    }
+
+    fn is_bst(&self) -> bool {
+        RedBlackTree::is_bst_node(self.root.as_ref(), None, None)
+    }
+
+    fn is_bst_node(x: Option<&Box<Node<K, V>>>, min: Option<&K>, max: Option<&K>) -> bool {
+        if x.is_none() {
+            return true;
+        }
+        let x_ref = x.unwrap();
+
+        if min.is_some() && x_ref.key.cmp(min.unwrap()) != Ordering::Greater {
+            return false;
+        }
+        if max.is_some() && x_ref.key.cmp(max.unwrap()) != Ordering::Less {
+            return false;
+        }
+        RedBlackTree::is_bst_node(x_ref.left.as_ref(), min, max) && RedBlackTree::is_bst_node(x_ref.right.as_ref(), min, max)
+    }
+
+    fn is_size_consistent(&self) -> bool {
+        RedBlackTree::is_size_consistent_node(self.root.as_ref())
+    }
+
+    fn is_size_consistent_node(x: Option<&Box<Node<K, V>>>) -> bool {
+        if x.is_none() {
+            return true;
+        }
+        let x_ref = x.unwrap();
+        if x_ref.n != size(x_ref.left.as_ref()) + size(x_ref.right.as_ref()) + 1 {
+            return false;
+        }
+        RedBlackTree::is_size_consistent_node(x_ref.left.as_ref()) && RedBlackTree::is_size_consistent_node(x_ref.right.as_ref())
+    }
+
+    fn is_rank_consistent(&self) -> bool {
+        //TODO port from Java code
+        // for (int i = 0; i < size(); i++)
+        //     if (i != rank(select(i))) return false;
+        // for (Key key : keys())
+        //     if (key.compareTo(select(rank(key))) != 0) return false;
+        // return true;
+        true
+    }
+
+    fn is_2_3(&self) -> bool {
+        RedBlackTree::is_2_3_node(self.root.as_ref(), true)
+    }
+
+    fn is_2_3_node(x: Option<&Box<Node<K, V>>>, x_is_root: bool) -> bool {
+        if x.is_none() {
+            return true;
+        }
+        let x_ref = x.unwrap();
+        if is_red(x_ref.right.as_ref()) {
+            return false;
+        }
+        if x_is_root && x_ref.color == Color::Red && is_red(x_ref.left.as_ref()) {
+            return false;
+        }
+
+        RedBlackTree::is_2_3_node(x_ref.left.as_ref(), false) && RedBlackTree::is_2_3_node(x_ref.right.as_ref(), false)
+    }
+
+    fn is_balanced(&self) -> bool {
+        let mut black = 0i32;
+        let mut x = self.root.as_ref();
+        while x.is_some() {
+            if !is_red(x) {
+                black += 1;
+            }
+            x = x.unwrap().left.as_ref();
+        }
+        RedBlackTree::is_balanced_node(self.root.as_ref(), black)
+    }
+
+    fn is_balanced_node(x: Option<&Box<Node<K, V>>>, mut black: i32) -> bool {
+        if x.is_none() {
+            return black == 0;
+        }
+        let x_ref = x.unwrap();
+        if !is_red(x) {
+            black -= 1;
+        }
+        RedBlackTree::is_balanced_node(x_ref.left.as_ref(), black) && RedBlackTree::is_balanced_node(x_ref.right.as_ref(), black)
     }
 }
 
