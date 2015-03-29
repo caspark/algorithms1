@@ -47,7 +47,7 @@ fn size<K, V>(maybe_node: Option<&Box<Node<K, V>>>) -> i32 {
     }
 }
 
-struct RedBlackTree<K, V> {
+pub struct RedBlackTree<K, V> {
     root: Option<Box<Node<K, V>>>,
 }
 
@@ -230,6 +230,57 @@ impl<'t, K, V> RedBlackTree<K, V> where K: Ord {
         }
         h.n = size(h.left.as_ref()) + size(h.right.as_ref()) + 1;
         h
+    }
+
+    pub fn min(&self) -> Option<&K> {
+        self.root.as_ref().map(|root| &RedBlackTree::min_node(root).key)
+    }
+
+    fn min_node(x: &Box<Node<K, V>>) -> &Box<Node<K, V>> {
+        x.left.as_ref().map(|left| RedBlackTree::min_node(left)).unwrap_or(x)
+    }
+
+    pub fn max(&self) -> Option<&K> {
+        self.root.as_ref().map(|root| &RedBlackTree::max_node(root).key)
+    }
+
+    fn max_node(x: &Box<Node<K, V>>) -> &Box<Node<K, V>> {
+        x.right.as_ref().map(|right| RedBlackTree::max_node(right)).unwrap_or(x)
+    }
+
+    pub fn keys(&self) -> Vec<&K> {
+        if self.is_empty() {
+            Vec::new()
+        } else {
+            self.keys_between(
+                self.min().expect("non-empty tree must have min"),
+                self.max().expect("non-empty tree must have max")
+            )
+        }
+    }
+
+    pub fn keys_between(&self, lo: &K, hi: &K) -> Vec<&K> {
+        let mut keys = Vec::with_capacity(self.size() as usize);
+        RedBlackTree::keys_between_node(self.root.as_ref(), &mut keys, lo, hi);
+        keys
+    }
+
+    fn keys_between_node(x: Option<&'t Box<Node<K, V>>>, keys: &mut Vec<&'t K>, lo: &K, hi: &K) {
+        if x.is_none() {
+            return;
+        }
+        let x_ref = x.unwrap();
+        let cmplo = lo.cmp(&x_ref.key);
+        let cmphi = hi.cmp(&x_ref.key);
+        if cmplo == Ordering::Less {
+            RedBlackTree::keys_between_node(x_ref.left.as_ref(), keys, lo, hi);
+        }
+        if cmplo != Ordering::Greater && cmphi != Ordering::Less {
+            keys.push(&x_ref.key)
+        }
+        if cmplo == Ordering::Greater {
+            RedBlackTree::keys_between_node(x_ref.right.as_ref(), keys, lo, hi);
+        }
     }
 
     fn check_state(&self) -> bool {
