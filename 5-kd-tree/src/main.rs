@@ -6,3 +6,4 @@ extern crate rand;
 mod point;
 mod rect;
 mod redblacktree;
+mod pointset;

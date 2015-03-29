@@ -2,7 +2,7 @@ use point::Point;
 use std::num::Float;
 
 #[derive(Debug)]
-struct Rect([f64; 4]);
+pub struct Rect([f64; 4]);
 
 impl Rect {
     pub fn new(bounds: [f64; 4]) -> Rect {
