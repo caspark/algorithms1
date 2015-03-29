@@ -70,7 +70,7 @@ pub fn solve(board: &Board) -> Option<Vec<Board>> {
         None
     } else {
         let mut current = &a_state_rc;
-        let mut solution = Vec::with_capacity(current.depth as usize + 1 as usize);
+        let mut solution = Vec::with_capacity(current.depth as usize + 1);
         while current.parent.is_some() {
             solution.push(current.board.clone());
             current = current.parent.as_ref().unwrap();

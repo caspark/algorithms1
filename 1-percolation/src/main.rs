@@ -1,6 +1,7 @@
 #![feature(core)] // needed for a whole bunch of unstable features
 #![feature(collections)] // so we can get the tail of a vector
 #![feature(test)] // so we can run benchmarks
+#![feature(convert)]
 
 extern crate getopts;
 #[cfg(test)]
@@ -16,6 +17,7 @@ mod percolation;
 mod benchmarks;
 
 fn main() {
+    use std::convert::AsRef;
     use std::env;
     use getopts::Options;
 
@@ -31,7 +33,7 @@ fn main() {
             if matches.opt_present("h") {
                 let brief = format!("{}\n\nGathers percolation statistics according to the options provided.",
                         opts.short_usage(&args[0]));
-                print!("{}", opts.usage(brief.as_slice()));
+                print!("{}", opts.usage(brief.as_ref()));
             } else {
                 let size_str = matches.opt_str("n").expect("-n (or --size) should have been a required option");
                 let times_str = matches.opt_str("t").unwrap_or("1".to_string());
