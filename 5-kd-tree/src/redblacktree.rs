@@ -294,7 +294,7 @@ mod tests {
         quickcheck(prop as fn(Vec<i32>) -> bool);
     }
 
-    #[test] //FIXME test is currently failing
+    #[test]
     fn delete_min() {
         fn prop(mut xs: Vec<i32>) -> bool {
             //TODO discard property value instead of returning tree
@@ -309,6 +309,7 @@ mod tests {
             }
 
             let min = xs.iter().min().expect("xs len is known to be > 0");
+            t.delete_min();
 
             for i in xs.iter() {
                 if i == min {
