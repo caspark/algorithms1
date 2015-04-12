@@ -31,6 +31,14 @@ impl<T> Rawlink<T> {
 
 impl<T> Copy for Rawlink<T> {}
 
+impl<T> Clone for Rawlink<T> {
+    #[inline]
+    fn clone(&self) -> Rawlink<T> {
+        Rawlink{p: self.p}
+    }
+}
+
+
 struct Node<E> {
     item: E,
     next: Option<Box<Node<E>>>,

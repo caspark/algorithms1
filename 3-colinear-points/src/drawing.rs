@@ -5,7 +5,6 @@ use piston::window::WindowSettings;
 use piston::event::{events, RenderEvent, UpdateEvent};
 use sdl2_window::Sdl2Window;
 use point::Point;
-use std::iter::IteratorExt;
 use std::sync::mpsc::Receiver;
 use std::cmp;
 
@@ -36,7 +35,7 @@ pub fn display(points: &[Point], incoming_lines: Receiver<Option<[i32; 4]>>) {
     let mut lines = Vec::new();
     let mut complete = false;
 
-    for e in events(&window) {
+    for e in window.events() {
         if let Some(args) = e.render_args() {
 
             let min_x = bounds[0] as f64;

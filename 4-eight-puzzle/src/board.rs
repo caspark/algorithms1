@@ -1,5 +1,4 @@
 use std::num::{Int, SignedInt};
-use std::iter::IteratorExt;
 
 /// An 8 Puzzle board (or N puzzle board).
 #[derive(Debug, Eq, PartialEq, Clone)]

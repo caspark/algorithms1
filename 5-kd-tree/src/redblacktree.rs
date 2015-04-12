@@ -1,7 +1,7 @@
 use std::cmp::{Ord, Ordering};
 use std::mem;
 
-#[derive(Debug, Eq, PartialEq, Copy)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
 enum Color {
     Red,
     Black,

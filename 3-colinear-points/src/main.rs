@@ -1,6 +1,7 @@
 #![feature(collections)]
 #![feature(core)]
 #![feature(plugin)]
+#![feature(slice_patterns)] // slice pattern syntax is experimental ( Ok(Some([x1, y1, x2, y2])) => ... )
 
 #![plugin(regex_macros)]
 

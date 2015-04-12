@@ -1,7 +1,6 @@
 use std::fs::File;
 use std::io;
 use std::io::prelude::*;
-use std::iter::IteratorExt;
 
 pub fn read_input_file(filename: &String) -> io::Result<Vec<(i32, i32)>> {
     let mut file = try!(File::open(filename));

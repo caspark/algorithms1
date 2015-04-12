@@ -1,5 +1,6 @@
 #![feature(collections)] // for Vec.push_all()
 #![feature(old_io)]
+#![feature(convert)] // as_mut_slice() is unstable, awaiting API revisions
 
 extern crate rand;
 

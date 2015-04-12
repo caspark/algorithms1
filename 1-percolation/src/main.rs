@@ -1,4 +1,3 @@
-#![feature(core)] // needed for a whole bunch of unstable features
 #![feature(collections)] // so we can get the tail of a vector
 #![feature(test)] // so we can run benchmarks
 #![feature(convert)]
