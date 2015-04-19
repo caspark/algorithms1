@@ -1,5 +1,4 @@
 #![feature(collections)] // for Vec.push_all()
-#![feature(old_io)]
 #![feature(convert)] // as_mut_slice() is unstable, awaiting API revisions
 
 extern crate rand;
@@ -21,17 +20,16 @@ fn main() {
         Ok(k) => {
             use randomizedqueue::RandomQueue;
             use std::str;
-            use std::old_io::{self, IoErrorKind};
+            use std::io;
+            use std::io::prelude::*;
 
-            let mut stdin = old_io::stdin();
+            let stdin = io::stdin();
             let mut randomq = RandomQueue::new();
-            loop {
-                let read_result = stdin.read_until(' ' as u8);
+            for read_result in stdin.lock().split(' ' as u8) {
                 match read_result {
                     //FIXME better to store strings here than bytes, but couldn't make the lifetimes work
                     Ok(read_bytes) => randomq.enqueue(read_bytes),
-                    Err(ref err) if err.kind == IoErrorKind::EndOfFile => break,
-                    Err(err) => println!("Error reading from stdin: {}", err),
+                    Err(err) => panic!("Error reading from stdin: {}", err),
                 }
             }
             for _ in 0 .. k {
@@ -40,6 +38,6 @@ fn main() {
                 println!("{}", e_as_str.trim());
             }
         },
-        Err(_) => println!("Error: received non-numeric k, where k is the number of items to subset from stdin"),
+        Err(_) => panic!("Error: received non-numeric k, where k is the number of items to subset from stdin"),
     }
 }

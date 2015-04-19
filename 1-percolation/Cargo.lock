@@ -3,7 +3,7 @@ name = "1-percolation"
 version = "0.0.1"
 dependencies = [
  "getopts 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "quickcheck 0.2.12 (registry+https://github.com/rust-lang/crates.io-index)",
+ "quickcheck 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -30,7 +30,7 @@ dependencies = [
 
 [[package]]
 name = "quickcheck"
-version = "0.2.12"
+version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "log 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
