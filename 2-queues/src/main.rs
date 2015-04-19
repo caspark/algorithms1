@@ -18,6 +18,7 @@ fn main() {
     }
     match args[1].parse::<u32>() {
         Ok(k) => {
+            use std::borrow::ToOwned;
             use randomizedqueue::RandomQueue;
             use std::str;
             use std::io;
@@ -27,15 +28,13 @@ fn main() {
             let mut randomq = RandomQueue::new();
             for read_result in stdin.lock().split(' ' as u8) {
                 match read_result {
-                    //FIXME better to store strings here than bytes, but couldn't make the lifetimes work
-                    Ok(read_bytes) => randomq.enqueue(read_bytes),
+                    Ok(read_bytes) => randomq.enqueue(str::from_utf8(&read_bytes).unwrap().trim().to_owned()),
                     Err(err) => panic!("Error reading from stdin: {}", err),
                 }
             }
             for _ in 0 .. k {
-                let e = randomq.dequeue().expect("k must be <= number of strings provided to stdin");
-                let e_as_str = str::from_utf8(&e).unwrap();
-                println!("{}", e_as_str.trim());
+                let item = randomq.dequeue().expect("k must be <= number of strings provided to stdin");
+                println!("{}", item);
             }
         },
         Err(_) => panic!("Error: received non-numeric k, where k is the number of items to subset from stdin"),
